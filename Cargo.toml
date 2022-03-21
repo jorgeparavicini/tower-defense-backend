@@ -1,0 +1,5 @@
+[workspace]
+members = [
+    "tower-defense",
+    "tower-defense-server",
+]

@@ -1,0 +1,19 @@
+[package]
+name = "tower-defense-server"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio-tungstenite = "0.17.0"
+tokio = { version = "1.17.0", features = ["full"] }
+tokio-stream = "0.1.8"
+serde = { version = "1.0.136", features = ["derive"] }
+warp = "0.3.2"
+serde_json = "1.0.79"
+futures = { version = "0.3.21" }
+uuid = { version = "0.8.2", features = ["serde", "v4"] }
+tower-defense = { path = "../tower-defense" }
+log = "0.4.14"
+pretty_env_logger = "0.4.0"
