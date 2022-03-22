@@ -1,5 +1,6 @@
 use serde::Serialize;
 
+// TODO: Convert to Enum with available messages
 #[derive(Serialize)]
 pub struct ServerMessage<'a, T> where T: Serialize {
     message: String,

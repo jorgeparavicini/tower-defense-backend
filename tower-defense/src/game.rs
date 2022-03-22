@@ -1,14 +1,14 @@
 use crate::map::Map;
 use crate::path::Coords;
 
-pub struct Game<'a> {
-    map: &'a Map,
+pub struct Game {
+    map: &'static Map,
     pos: Coords,
     time: f64
 }
 
-impl<'a> Game<'a> {
-    pub fn new(map: &Map) -> Game {
+impl Game {
+    pub fn new(map: &'static Map) -> Game {
         Game {
             map,
             pos: Coords::new(0.0, 0.0),

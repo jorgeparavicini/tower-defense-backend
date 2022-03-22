@@ -1,4 +1,6 @@
-#[derive(Clone, Debug)]
+use serde::Serialize;
+
+#[derive(Serialize, Clone, Debug)]
 pub struct Coords {
     x: f64,
     y: f64,

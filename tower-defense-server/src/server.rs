@@ -1,17 +1,14 @@
-use std::time::{Duration};
-use crate::{Client, Clients};
 use crate::game::game_server::GameServer;
-use futures::{FutureExt, StreamExt, stream};
+use futures::{FutureExt, StreamExt};
 use futures::stream::SplitStream;
-use log::{debug, info};
 use serde::Deserialize;
 use serde_json::from_str;
-use tokio::{sync::mpsc, time};
+use tokio::{sync::mpsc};
 use tokio::sync::mpsc::UnboundedSender;
-use tokio::time::{Instant, Interval};
 use tokio_stream::wrappers::UnboundedReceiverStream;
 use warp::ws::{Message, WebSocket};
 use tower_defense::levels::MAP_LEVEL_1;
+use crate::game::Client;
 
 #[derive(Deserialize, Debug)]
 pub struct PingRequest {
@@ -31,8 +28,9 @@ pub async fn game_connection(ws: WebSocket) {
     }));
 
     println!("Client connected");
-    let mut game_server = GameServer::new(&MAP_LEVEL_1, client_sender, client_ws_rcv);
-    game_server.start().await;
+    let client = Client::new(client_sender, client_ws_rcv);
+    let mut game_server = GameServer::new(&MAP_LEVEL_1, client);
+    game_server.start();
 /*
     debug!("Generating map");
     let map = serde_json::to_string(&MAP_LEVEL_1.deref()).unwrap();
