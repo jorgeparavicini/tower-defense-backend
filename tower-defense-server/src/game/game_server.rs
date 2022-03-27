@@ -1,10 +1,8 @@
 use std::error::Error;
-use std::time::{Instant, SystemTime, UNIX_EPOCH};
+use std::time::{Instant};
 use futures::{stream, StreamExt};
-use futures::future::err;
-use log::{error, info};
+use log::{debug, error, info};
 use tokio::time::{self, Duration, Interval};
-use tokio_tungstenite::tungstenite::client;
 use tower_defense::Game;
 use tower_defense::core::Map;
 use crate::game::client::Client;
@@ -65,17 +63,17 @@ impl GameServer {
                     if let Err(e) = self.client.send_message(SendMessage::Pong(ping)) {
                         error!("Could not send pong message: {}", e);
                     }
-                }
+                },
+                ReceiveMessage::Command => {}
             }
         }
 
         let pos = self.game.get_coords();
-        info!("Sending message");
-        /*if let Err(_) = self.client.send_message(
-            ServerMessage::new(String::from("update"), pos)) {
+        debug!("Sending message");
+        if let Err(_) = self.client.send_message(SendMessage::Update(pos)) {
             info!("Closing game");
             return Err(GameError);
-        }*/
+        }
 
         Ok(())
     }
