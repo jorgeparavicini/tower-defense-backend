@@ -17,7 +17,7 @@ impl Game {
     }
 
     pub fn update(&mut self, delta_time: f64) {
-        self.time += delta_time / self.map.get_path().length();
+        self.time += delta_time * 96.0;
         self.pos = self.map.get_path().coords_at(self.time);
     }
 

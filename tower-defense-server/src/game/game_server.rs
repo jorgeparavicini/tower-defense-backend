@@ -75,6 +75,8 @@ impl GameServer {
             return Err(GameError);
         }
 
+        self.last_instant = now;
+
         Ok(())
     }
 }

@@ -10,6 +10,10 @@ pub trait PathComponent {
     fn length(&self) -> f64;
 
     fn coords_at(&self, t: f64) -> Coords;
+
+    fn start(&self) -> Coords;
+
+    fn end(&self) -> Coords;
 }
 
 pub struct Line {
@@ -58,18 +62,29 @@ impl PathComponent for Line {
             y: self.start.y + (self.end.y - self.start.y) * t,
         };
     }
+
+    fn start(&self) -> Coords {
+        self.start.clone()
+    }
+
+    fn end(&self) -> Coords {
+        self.end.clone()
+    }
 }
 
 pub struct Path {
     path: Vec<Box<dyn PathComponent + Send + Sync>>,
+    end: Coords,
     length: f64,
 }
 
 impl Path {
     pub fn new(path: Vec<Box<dyn PathComponent + Send + Sync>>) -> Path {
         let length = path.iter().map(|x| x.length()).sum();
+        let end = path.last().unwrap().end();
         Path {
             path,
+            end,
             length,
         }
     }
@@ -78,7 +93,7 @@ impl Path {
         self.length
     }
 
-    pub fn coords_at(&self, t: f64) -> Coords {
+    pub fn coords_at_clamped(&self, t: f64) -> Coords {
         let t = clamp(t);
         let mut accumulated_t = 0.0;
         for i in 0..self.path.len() {
@@ -90,7 +105,11 @@ impl Path {
             }
             accumulated_t = new_t;
         }
-        unreachable!("The loop should always return");
+        self.end.clone()
+    }
+
+    pub fn coords_at(&self, t: f64) -> Coords {
+        self.coords_at_clamped(t / self.length)
     }
 }
 
@@ -106,16 +125,26 @@ fn clamp(t: f64) -> f64 {
 
 #[cfg(test)]
 mod path_tests {
-    use crate::r#mod::{Coords, Line, Path};
+    use crate::path::{Coords, Line, Path};
 
     #[test]
     fn coords_at() {
         let path = Path::new(vec![
-            Box::new(Line::new(Coords::new(0.0, 10.0), Coords::new(10.0, 10.0))),
-            Box::new(Line::new(Coords::new(10.0, 10.0), Coords::new(10.0, 0.0))),
+            Box::new(Line::new(Coords::new(0.0, 200.0), Coords::new(100.0, 200.0))),
+            Box::new(Line::new(Coords::new(100.0, 200.0), Coords::new(100.0, 100.0))),
+            Box::new(Line::new(Coords::new(100.0, 100.0), Coords::new(300.0, 100.0))),
         ]);
 
-        assert_eq!(path.coords_at(0.0), Coords::new(0.0, 10.0));
+        //assert_eq!(path.coords_at(0.0), Coords::new(0.0, 10.0));
+        println!("{:#?}", path.coords_at(0.1));
+        println!("{:#?}", path.coords_at(0.2));
+        println!("{:#?}", path.coords_at(0.3));
+        println!("{:#?}", path.coords_at(0.4));
         println!("{:#?}", path.coords_at(0.5));
+        println!("{:#?}", path.coords_at(0.6));
+        println!("{:#?}", path.coords_at(0.7));
+        println!("{:#?}", path.coords_at(0.8));
+        println!("{:#?}", path.coords_at(0.9));
+        println!("{:#?}", path.coords_at(1.0));
     }
 }

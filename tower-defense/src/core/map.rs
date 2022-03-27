@@ -27,9 +27,13 @@ impl Size {
 impl Map {
     pub fn new(background_image: String, background_filler_image: String, size: Size) -> Map {
         let path = Path::new(vec![
-            Box::new(Line::new(Coords::new(0.0, 200.0), Coords::new(100.0, 200.0))),
-            Box::new(Line::new(Coords::new(100.0, 200.0), Coords::new(100.0, 100.0))),
-            Box::new(Line::new(Coords::new(100.0, 100.0), Coords::new(300.0, 100.0))),
+            Box::new(Line::new(Coords::new(0.0, 220.0), Coords::new(100.0, 220.0))),
+            Box::new(Line::new(Coords::new(100.0, 220.0), Coords::new(100.0, 100.0))),
+            Box::new(Line::new(Coords::new(100.0, 100.0), Coords::new(220.0, 100.0))),
+            Box::new(Line::new(Coords::new(220.0, 100.0), Coords::new(220.0, 260.0))),
+            Box::new(Line::new(Coords::new(220.0, 260.0), Coords::new(380.0, 260.0))),
+            Box::new(Line::new(Coords::new(380.0, 260.0), Coords::new(380.0, 180.0))),
+            Box::new(Line::new(Coords::new(380.0, 180.0), Coords::new(600.0, 180.0))),
         ]);
 
         Map {
