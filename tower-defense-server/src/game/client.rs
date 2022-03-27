@@ -5,7 +5,6 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use futures::stream::SplitStream;
 use futures::StreamExt;
 use log::{debug, error, info, warn};
-use serde::Serialize;
 use tokio::sync::{mpsc, RwLock};
 use tokio::task::{JoinHandle, spawn};
 use warp::ws::{Message, WebSocket};

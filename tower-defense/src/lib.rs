@@ -1,5 +1,5 @@
 mod game;
-mod path;
+pub mod path;
 pub mod core;
 pub mod levels;
 

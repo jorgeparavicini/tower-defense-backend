@@ -1,5 +1,6 @@
 use serde::{Serialize, Deserialize};
-use tower_defense::core::Map;
+use tower_defense::core::{Map};
+use tower_defense::path::Coords;
 
 #[derive(Deserialize)]
 #[serde(tag = "message", content = "data")]
@@ -14,21 +15,5 @@ pub enum ReceiveMessage {
 pub enum SendMessage<'a> {
     Pong(u64),
     Map(&'a Map),
+    Update(&'a Coords)
 }
-
-/*
-// TODO: Convert to Enum with available messages
-#[derive(Serialize)]
-pub struct ServerMessage<'a, T> where T: Serialize {
-    message: String,
-    data: &'a T,
-}
-
-impl<'a, T> ServerMessage<'a, T> where T: Serialize {
-    pub fn new(message: String, data: &'a T) -> Self {
-        Self {
-            message,
-            data,
-        }
-    }
-}*/
