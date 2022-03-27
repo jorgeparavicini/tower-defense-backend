@@ -106,7 +106,7 @@ fn clamp(t: f64) -> f64 {
 
 #[cfg(test)]
 mod path_tests {
-    use crate::path::{Coords, Line, Path};
+    use crate::r#mod::{Coords, Line, Path};
 
     #[test]
     fn coords_at() {

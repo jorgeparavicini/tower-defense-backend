@@ -29,7 +29,7 @@ pub async fn game_connection(ws: WebSocket) {
 
     println!("Client connected");
     let client = Client::new(client_sender, client_ws_rcv);
-    let mut game_server = GameServer::new(&MAP_LEVEL_1, client);
+    let game_server = GameServer::new(&MAP_LEVEL_1, client);
     game_server.start();
 /*
     debug!("Generating map");

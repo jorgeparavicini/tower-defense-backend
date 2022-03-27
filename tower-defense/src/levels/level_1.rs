@@ -1,4 +1,4 @@
-use crate::map::{Map, Size};
+use crate::core::{Map, Size};
 
 lazy_static! {
     pub static ref MAP_LEVEL_1: Map = {

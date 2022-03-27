@@ -1,12 +1,14 @@
 use std::error::Error;
-use std::time::Instant;
+use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use futures::{stream, StreamExt};
-use log::{info};
+use futures::future::err;
+use log::{error, info};
 use tokio::time::{self, Duration, Interval};
-use tower_defense::game::Game;
-use tower_defense::map::Map;
+use tokio_tungstenite::tungstenite::client;
+use tower_defense::Game;
+use tower_defense::core::Map;
 use crate::game::client::Client;
-use crate::game::ServerMessage;
+use crate::game::{ReceiveMessage, SendMessage};
 
 
 const TICK_RATE: u64 = 30;
@@ -33,9 +35,7 @@ impl GameServer {
 
     pub fn start(self) -> Result<(), Box<dyn Error>> {
         // Send map to client
-        let map_message = ServerMessage::new(
-            String::from("map"),
-            self.game.get_map());
+        let map_message = SendMessage::Map(self.game.get_map());
         self.client.send_message(map_message)?;
 
         tokio::task::spawn(self.game_loop());
@@ -60,18 +60,22 @@ impl GameServer {
         self.game.update(delta_time.as_micros() as f64 / 1_000_000.0);
 
         for message in self.client.get_messages().await {
-            if message.is_text() {
-                info!("{}", message.to_str().expect("Kek"));
+            match message {
+                ReceiveMessage::Ping(ping) => {
+                    if let Err(e) = self.client.send_message(SendMessage::Pong(ping)) {
+                        error!("Could not send pong message: {}", e);
+                    }
+                }
             }
         }
 
         let pos = self.game.get_coords();
         info!("Sending message");
-        if let Err(_) = self.client.send_message(
+        /*if let Err(_) = self.client.send_message(
             ServerMessage::new(String::from("update"), pos)) {
             info!("Closing game");
             return Err(GameError);
-        }
+        }*/
 
         Ok(())
     }

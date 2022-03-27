@@ -1,17 +1,18 @@
 use std::collections::VecDeque;
 use std::error::Error;
 use std::sync::Arc;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use futures::stream::SplitStream;
 use futures::StreamExt;
-use log::{debug, error, info};
+use log::{debug, error, info, warn};
 use serde::Serialize;
 use tokio::sync::{mpsc, RwLock};
 use tokio::task::{JoinHandle, spawn};
 use warp::ws::{Message, WebSocket};
-use crate::game::ServerMessage;
+use crate::game::{ReceiveMessage, SendMessage};
 
 pub type ClientSender = mpsc::UnboundedSender<std::result::Result<Message, warp::Error>>;
-pub type Messages = Arc<RwLock<VecDeque<Message>>>;
+pub type Messages = Arc<RwLock<VecDeque<ReceiveMessage>>>;
 pub type ClientReceiver = SplitStream<WebSocket>;
 
 // TODO: Graceful shutdown?
@@ -34,12 +35,11 @@ impl Client {
         }
     }
 
-    pub async fn get_messages(&mut self) -> VecDeque<Message> {
+    pub async fn get_messages(&mut self) -> VecDeque<ReceiveMessage> {
         std::mem::take(&mut *self.messages.write().await)
     }
 
-    pub fn send_message<'a, T>(&self, message: ServerMessage<'a, T>) -> Result<(), Box<dyn Error>>
-        where T: Serialize
+    pub fn send_message(&self, message: SendMessage) -> Result<(), Box<dyn Error>>
     {
         let json = serde_json::to_string(&message)?;
         self.sender.send(Ok(Message::text(json)))?;
@@ -58,7 +58,22 @@ impl Client {
             };
 
             info!("Message received");
-            message_queue.write().await.push_back(msg);
+            if msg.is_text() {
+                if let Ok(mut result) = serde_json::from_str(msg.to_str().unwrap()) {
+                    if let ReceiveMessage::Ping(ping) = result {
+                        let ping = Duration::from_millis(ping);
+                        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+                        let pong = (now - ping).as_millis() as u64;
+                        result = ReceiveMessage::Ping(pong);
+                    }
+                    message_queue.write().await.push_back(result);
+                } else {
+                    error!("Could not read message received: {}", msg.to_str().unwrap());
+                }
+            } else {
+                warn!("Received non text message.");
+            }
+
         }
     }
 }

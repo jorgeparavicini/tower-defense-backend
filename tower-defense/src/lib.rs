@@ -1,7 +1,9 @@
-pub mod map;
-pub mod game;
+mod game;
+mod path;
+pub mod core;
 pub mod levels;
-pub mod path;
+
+pub use game::Game;
 
 #[macro_use]
 extern crate lazy_static;

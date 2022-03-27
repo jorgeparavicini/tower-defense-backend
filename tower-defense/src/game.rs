@@ -1,4 +1,4 @@
-use crate::map::Map;
+use crate::core::Map;
 use crate::path::Coords;
 
 pub struct Game {
@@ -17,7 +17,7 @@ impl Game {
     }
 
     pub fn update(&mut self, delta_time: f64) {
-        self.time += delta_time * 0.2;
+        self.time += delta_time / self.map.get_path().length();
         self.pos = self.map.get_path().coords_at(self.time);
     }
 
