@@ -1,4 +1,6 @@
 mod game;
+mod entity;
+mod math;
 pub mod path;
 pub mod core;
 pub mod levels;

@@ -42,6 +42,7 @@ impl GameServer {
 
     async fn game_loop(mut self) {
         self.last_instant = Instant::now();
+        self.game.start();
         stream::unfold(self, |mut state| async move {
             return match state.tick().await {
                 Ok(()) => Some(((), state)),
@@ -68,9 +69,8 @@ impl GameServer {
             }
         }
 
-        let pos = self.game.get_coords();
         debug!("Sending message");
-        if let Err(_) = self.client.send_message(SendMessage::Update(pos)) {
+        if let Err(_) = self.client.send_message(SendMessage::Update(&self.game)) {
             info!("Closing game");
             return Err(GameError);
         }

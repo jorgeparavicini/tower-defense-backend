@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 use tower_defense::core::{Map};
-use tower_defense::path::Coords;
+use tower_defense::Game;
 
 #[derive(Deserialize)]
 #[serde(tag = "message", content = "data")]
@@ -15,5 +15,5 @@ pub enum ReceiveMessage {
 pub enum SendMessage<'a> {
     Pong(u64),
     Map(&'a Map),
-    Update(&'a Coords)
+    Update(&'a Game)
 }
