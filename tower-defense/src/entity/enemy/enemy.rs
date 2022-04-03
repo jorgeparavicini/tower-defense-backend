@@ -3,6 +3,12 @@ use crate::math::Vector2;
 use serde::Serialize;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
+pub trait EnemyData {
+    fn get_max_health(&self) -> f64;
+    fn get_damage(&self) -> u64;
+    fn get_move_speed(&self) -> f64;
+}
+
 #[derive(Serialize)]
 pub struct Enemy {
     id: usize,

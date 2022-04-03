@@ -1,11 +1,10 @@
-use crate::entity::enemy::enemy::Enemy;
-use crate::entity::enemy::enemy_data::EnemyData;
+use crate::entity::enemy::enemy::{Enemy, EnemyData};
 use crate::entity::enemy::RECRUIT;
 use serde::Serialize;
 
 #[derive(Serialize)]
 pub enum EnemyType {
-    Recruit
+    Recruit,
 }
 
 impl EnemyType {
