@@ -1,6 +1,10 @@
 use crate::core::Map;
-use crate::entity::{Enemy, EnemyType};
+use crate::entity::{Enemy, EnemyType, Structure, StructureType};
+use crate::math::Vector2;
 use serde::Serialize;
+
+#[derive(Debug, Clone)]
+pub struct GameError;
 
 #[derive(Serialize)]
 pub struct Game {
@@ -8,6 +12,7 @@ pub struct Game {
     map: &'static Map,
     time: f64,
     enemies: Vec<Enemy>,
+    structures: Vec<Structure>,
     current_lives: u64,
 }
 
@@ -17,6 +22,7 @@ impl Game {
             map,
             time: 0.0,
             enemies: vec![],
+            structures: vec![],
             current_lives: map.get_max_lives() - 2,
         }
     }
@@ -34,6 +40,18 @@ impl Game {
 
     pub fn get_map(&self) -> &Map {
         &self.map
+    }
+
+    pub fn try_place_structure(
+        &mut self,
+        structure: StructureType,
+        pos: Vector2,
+    ) -> Result<(), GameError> {
+        // TODO: Check if structure position is valid
+        let structure = structure.new(pos);
+        self.structures.push(structure);
+
+        Ok(())
     }
 
     fn move_enemies(&mut self) {

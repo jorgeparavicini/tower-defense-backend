@@ -1,9 +1,9 @@
-mod game;
-mod entity;
-mod math;
-pub mod path;
 pub mod core;
+pub mod entity;
+mod game;
 pub mod levels;
+pub mod math;
+pub mod path;
 
 pub use game::Game;
 

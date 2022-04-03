@@ -1,7 +1,7 @@
+use serde::{Deserialize, Serialize};
 use std::ops;
-use serde::Serialize;
 
-#[derive(Serialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Vector2 {
     x: f64,
     y: f64,

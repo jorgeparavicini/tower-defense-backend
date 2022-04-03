@@ -1,14 +1,14 @@
+use crate::game::{ReceiveMessage, SendMessage};
+use futures::stream::SplitStream;
+use futures::StreamExt;
+use log::{debug, error, info, warn};
 use std::collections::VecDeque;
 use std::error::Error;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use futures::stream::SplitStream;
-use futures::StreamExt;
-use log::{debug, error, info, warn};
 use tokio::sync::{mpsc, RwLock};
-use tokio::task::{JoinHandle, spawn};
+use tokio::task::{spawn, JoinHandle};
 use warp::ws::{Message, WebSocket};
-use crate::game::{ReceiveMessage, SendMessage};
 
 pub type ClientSender = mpsc::UnboundedSender<std::result::Result<Message, warp::Error>>;
 pub type Messages = Arc<RwLock<VecDeque<ReceiveMessage>>>;
@@ -18,15 +18,13 @@ pub type ClientReceiver = SplitStream<WebSocket>;
 pub struct Client {
     sender: ClientSender,
     messages: Messages,
-    handle: JoinHandle<()>
+    handle: JoinHandle<()>,
 }
 
 impl Client {
     pub fn new(sender: ClientSender, receiver: ClientReceiver) -> Self {
         let messages = Arc::new(RwLock::new(VecDeque::new()));
-        let handle = spawn(Client::client_listener(
-            messages.clone(),
-            receiver));
+        let handle = spawn(Client::client_listener(messages.clone(), receiver));
         Self {
             sender,
             messages,
@@ -38,8 +36,7 @@ impl Client {
         std::mem::take(&mut *self.messages.write().await)
     }
 
-    pub fn send_message(&self, message: SendMessage) -> Result<(), Box<dyn Error>>
-    {
+    pub fn send_message(&self, message: SendMessage) -> Result<(), Box<dyn Error>> {
         let json = serde_json::to_string(&message)?;
         self.sender.send(Ok(Message::text(json)))?;
 
@@ -56,7 +53,6 @@ impl Client {
                 }
             };
 
-            info!("Message received");
             if msg.is_text() {
                 if let Ok(mut result) = serde_json::from_str(msg.to_str().unwrap()) {
                     if let ReceiveMessage::Ping(ping) = result {
@@ -65,6 +61,8 @@ impl Client {
                         let pong = (now - ping).as_millis() as u64;
                         result = ReceiveMessage::Ping(pong);
                     }
+
+                    info!("Received message {}", result.to_string());
                     message_queue.write().await.push_back(result);
                 } else {
                     error!("Could not read message received: {}", msg.to_str().unwrap());
@@ -72,7 +70,6 @@ impl Client {
             } else {
                 warn!("Received non text message.");
             }
-
         }
     }
 }

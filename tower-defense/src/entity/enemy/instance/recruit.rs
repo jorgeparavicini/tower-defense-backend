@@ -1,5 +1,5 @@
-use crate::entity::enemy::enemy_data::EnemyData;
-// TODO: Implement Serializer https://serde.rs/impl-serialize.html
+use crate::entity::enemy::enemy::EnemyData;
+// TODO: Implement Serializer https://serde.rs/impl-serialize.html, because the structs have no fields
 
 pub struct Recruit {}
 
@@ -10,7 +10,6 @@ impl Recruit {
 }
 
 impl EnemyData for Recruit {
-
     fn get_max_health(&self) -> f64 {
         Recruit::MAX_HEALTH
     }
@@ -25,5 +24,5 @@ impl EnemyData for Recruit {
 }
 
 lazy_static! {
-    pub static ref RECRUIT: Box<dyn EnemyData + Sync + Send> = Box::new(Recruit{});
+    pub static ref RECRUIT: Box<dyn EnemyData + Sync + Send> = Box::new(Recruit {});
 }
