@@ -58,7 +58,12 @@ impl Client {
                     if let ReceiveMessage::Ping(ping) = result {
                         let ping = Duration::from_millis(ping);
                         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-                        let pong = (now - ping).as_millis() as u64;
+                        let pong = if now > ping {
+                            now - ping
+                        } else {
+                            Duration::from_millis(0)
+                        }
+                        .as_millis() as u64;
                         result = ReceiveMessage::Ping(pong);
                     }
 

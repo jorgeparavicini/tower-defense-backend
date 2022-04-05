@@ -1,10 +1,15 @@
+use crate::entity::gif::GifFrames;
 use crate::entity::structure::structure_type::StructureType;
 use crate::math::Vector2;
+use crate::Game;
 use serde::Serialize;
+use std::rc::Weak;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-pub trait StructureData {
+pub trait StructureData: erased_serde::Serialize {
     fn get_max_health(&self) -> f64;
+    fn get_gif_data(&self) -> &GifFrames;
+    fn get_gif(&self) -> &str;
 }
 
 #[derive(Serialize)]
@@ -13,6 +18,7 @@ pub struct Structure {
     pos: Vector2,
     health: f64,
     structure_type: StructureType,
+    last_attack_time: Option<f64>,
 }
 
 impl Structure {
@@ -25,6 +31,7 @@ impl Structure {
             pos,
             health: structure_type.get_structure_data().get_max_health(),
             structure_type,
+            last_attack_time: None,
         }
     }
 
@@ -46,5 +53,11 @@ impl Structure {
 
     pub fn heal(&mut self, healing_amount: f64) {
         self.health += healing_amount;
+    }
+
+    pub fn update(&mut self, game: &mut Game) {}
+
+    fn attack(&mut self, time: f64) {
+        self.last_attack_time = Some(time);
     }
 }
