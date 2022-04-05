@@ -22,7 +22,7 @@ impl Game {
             map,
             time: 0.0,
             enemies: vec![],
-            structures: vec![],
+            structures: vec![StructureType::Grunt.new(Vector2::new(10.0, 100.0))],
             current_lives: map.get_max_lives() - 2,
         }
     }

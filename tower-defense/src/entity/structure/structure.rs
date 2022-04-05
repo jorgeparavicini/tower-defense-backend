@@ -1,10 +1,13 @@
+use crate::entity::gif::GifFrames;
 use crate::entity::structure::structure_type::StructureType;
 use crate::math::Vector2;
 use serde::Serialize;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-pub trait StructureData {
+pub trait StructureData: erased_serde::Serialize {
     fn get_max_health(&self) -> f64;
+    fn get_gif_data(&self) -> &GifFrames;
+    fn get_gif(&self) -> &str;
 }
 
 #[derive(Serialize)]

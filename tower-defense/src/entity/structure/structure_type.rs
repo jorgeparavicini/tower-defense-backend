@@ -2,8 +2,27 @@ use crate::entity::structure::structure::{Structure, StructureData};
 use crate::entity::structure::GRUNT;
 use crate::math::Vector2;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::fmt;
+use std::fmt::Formatter;
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
 
-#[derive(Serialize, Deserialize, Debug)]
+lazy_static! {
+    pub static ref STRUCTURE_MAP: HashMap<String, &'static Box<dyn StructureData + Send + Sync>> = {
+        let mut map = HashMap::new();
+        for structure_type in StructureType::iter() {
+            map.insert(
+                structure_type.to_string(),
+                structure_type.get_structure_data(),
+            );
+        }
+
+        map
+    };
+}
+
+#[derive(Serialize, Deserialize, Debug, EnumIter)]
 pub enum StructureType {
     Grunt,
 }
@@ -17,5 +36,11 @@ impl StructureType {
         match self {
             StructureType::Grunt => &*GRUNT,
         }
+    }
+}
+
+impl fmt::Display for StructureType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
     }
 }
