@@ -12,7 +12,7 @@ pub struct Game {
     map: &'static Map,
     time: f64,
     enemies: Vec<Enemy>,
-    structures: Vec<Structure>,
+    structures: Vec<Box<dyn Structure>>,
     current_lives: u64,
 }
 
