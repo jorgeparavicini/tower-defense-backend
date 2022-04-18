@@ -1,5 +1,5 @@
 use log::trace;
-use tower_defense::entity::STRUCTURE_MAP;
+use tower_defense::entity::STRUCTURE_MODEL_MAP;
 use warp::Filter;
 
 mod game;
@@ -20,7 +20,7 @@ pub async fn main() {
 
     let resources = warp::path("resources").and(warp::fs::dir("resources/www"));
 
-    let structure_data = warp::path("structures").map(|| warp::reply::json(&*STRUCTURE_MAP));
+    let structure_data = warp::path("structures").map(|| warp::reply::json(&*STRUCTURE_MODEL_MAP));
 
     let routes = health_route
         .or(game_ws)

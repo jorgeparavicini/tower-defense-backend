@@ -1,3 +1,3 @@
 mod grunt;
 
-pub(super) use grunt::GRUNT;
+pub(super) use grunt::Grunt;

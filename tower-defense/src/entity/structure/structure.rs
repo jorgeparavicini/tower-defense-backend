@@ -1,63 +1,133 @@
-use crate::entity::gif::GifFrames;
-use crate::entity::structure::structure_type::StructureType;
+use crate::entity::structure::Grunt;
 use crate::math::Vector2;
-use crate::Game;
-use serde::Serialize;
-use std::rc::Weak;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::fmt;
+use std::fmt::Formatter;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
 
-pub trait StructureData: erased_serde::Serialize {
-    fn get_max_health(&self) -> f64;
-    fn get_gif_data(&self) -> &GifFrames;
-    fn get_gif(&self) -> &str;
+pub type StructureModelMap = HashMap<String, Box<dyn StructureModel + 'static>>;
+
+/****************************************
+* Structure
+*****************************************/
+
+pub trait Structure: erased_serde::Serialize + Send + Sync {
+    fn get_id(&self) -> usize;
+    fn get_position(&self) -> &Vector2;
+    fn set_position(&mut self, pos: Vector2);
+
+    fn get_health(&self) -> f64;
+    fn inflict_damage(&mut self, damage: f64);
+    fn heal(&mut self, amount: f64);
 }
 
+serialize_trait_object!(Structure);
+
+/****************************************
+* Structure Base
+*****************************************/
+
 #[derive(Serialize)]
-pub struct Structure {
+pub struct StructureBase {
     id: usize,
     pos: Vector2,
     health: f64,
-    structure_type: StructureType,
-    last_attack_time: Option<f64>,
 }
 
-impl Structure {
-    pub(super) fn new(structure_type: StructureType, pos: Vector2) -> Self {
+impl StructureBase {
+    pub(crate) fn new(health: f64, pos: Vector2) -> Self {
         static ID_COUNTER: AtomicUsize = AtomicUsize::new(0);
         let id = ID_COUNTER.fetch_add(1, Ordering::Relaxed);
 
-        Self {
-            id,
-            pos,
-            health: structure_type.get_structure_data().get_max_health(),
-            structure_type,
-            last_attack_time: None,
-        }
+        StructureBase { id, pos, health }
+    }
+}
+
+impl Structure for StructureBase {
+    fn get_id(&self) -> usize {
+        self.id
     }
 
-    pub fn get_structure_type(&self) -> &StructureType {
-        &self.structure_type
-    }
-
-    pub fn get_position(&self) -> &Vector2 {
+    fn get_position(&self) -> &Vector2 {
         &self.pos
     }
 
-    pub fn get_health(&self) -> f64 {
+    fn set_position(&mut self, pos: Vector2) {
+        self.pos = pos;
+    }
+
+    fn get_health(&self) -> f64 {
         self.health
     }
 
-    pub fn apply_damage(&mut self, damage: f64) {
+    fn inflict_damage(&mut self, damage: f64) {
         self.health -= damage;
     }
 
-    pub fn heal(&mut self, healing_amount: f64) {
-        self.health += healing_amount;
+    fn heal(&mut self, amount: f64) {
+        self.health += amount;
+    }
+}
+
+/****************************************
+* Structure Factory
+*****************************************/
+
+pub trait StructureFactory {
+    fn new(pos: Vector2) -> Self;
+}
+
+pub trait StructureModel: Sync + Send + erased_serde::Serialize {}
+
+pub trait RegisterStructureModel {
+    fn register_model(model_map: &mut StructureModelMap);
+}
+
+serialize_trait_object!(StructureModel);
+
+/****************************************
+* Structure Type
+*****************************************/
+
+#[derive(Serialize, Deserialize, Debug, EnumIter)]
+pub enum StructureType {
+    Grunt,
+}
+
+impl StructureType {
+    pub fn new(self, pos: Vector2) -> Box<dyn Structure> {
+        match self {
+            StructureType::Grunt => Box::new(Grunt::new(pos)),
+        }
     }
 
-    pub fn update(&mut self, game: &mut Game) {}
-
-    fn attack(&mut self, time: f64) {
-        self.last_attack_time = Some(time);
+    fn register_model(&self, model_map: &mut StructureModelMap) {
+        match self {
+            StructureType::Grunt => Grunt::register_model(model_map),
+        }
     }
+}
+
+impl fmt::Display for StructureType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+/****************************************
+* Structure Map
+*****************************************/
+
+lazy_static! {
+    pub static ref STRUCTURE_MODEL_MAP: StructureModelMap = {
+        let mut map: StructureModelMap = HashMap::new();
+        for structure_type in StructureType::iter() {
+            structure_type.register_model(&mut map);
+        }
+
+        map
+    };
 }

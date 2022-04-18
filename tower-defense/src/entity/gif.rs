@@ -2,7 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Copy, Clone)]
 pub struct Frame {
     x: f64,
     y: f64,
@@ -10,13 +10,13 @@ pub struct Frame {
     h: f64,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Copy, Clone)]
 pub struct Size {
     w: f64,
     h: f64,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct GifFrame {
     frame: Frame,
     rotated: bool,
@@ -25,7 +25,7 @@ pub struct GifFrame {
     sourceSize: Size,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct GifFrames {
     frames: Vec<GifFrame>,
 }
