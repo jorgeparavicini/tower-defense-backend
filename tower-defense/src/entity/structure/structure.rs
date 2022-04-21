@@ -1,4 +1,5 @@
 use crate::entity::structure::Grunt;
+use crate::game::GameStructure;
 use crate::math::Vector2;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -98,7 +99,7 @@ pub enum StructureType {
 }
 
 impl StructureType {
-    pub fn new(self, pos: Vector2) -> Box<dyn Structure> {
+    pub fn new(self, pos: Vector2) -> Box<dyn GameStructure> {
         match self {
             StructureType::Grunt => Box::new(Grunt::new(pos)),
         }

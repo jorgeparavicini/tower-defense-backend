@@ -3,7 +3,9 @@ use crate::entity::structure::structure::{
     RegisterStructureModel, StructureBase, StructureFactory, StructureModel, StructureModelMap,
 };
 use crate::entity::Structure;
+use crate::game::{GameField, GameStructure, GameUpdate};
 use crate::math::Vector2;
+use log::debug;
 use serde::{Serialize, Serializer};
 use std::fs::File;
 use std::io::BufReader;
@@ -51,6 +53,14 @@ impl Structure for Grunt {
         self.base.heal(amount)
     }
 }
+
+impl GameUpdate for Grunt {
+    fn update(&mut self, field: &mut GameField) {
+        debug!("Update");
+    }
+}
+
+impl GameStructure for Grunt {}
 
 impl StructureFactory for Grunt {
     fn new(pos: Vector2) -> Self {
