@@ -1,4 +1,5 @@
-use crate::entity::structure::Grunt;
+use crate::entity::structure::LightningTower;
+use crate::entity::Enemy;
 use crate::math::Vector2;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -10,11 +11,22 @@ use strum_macros::EnumIter;
 
 pub type StructureModelMap = HashMap<String, Box<dyn StructureModel + 'static>>;
 
+pub trait StructureUpdate {
+    fn update(&mut self, enemies: &mut Vec<Enemy>, time: f64);
+}
+
+pub trait GameStructure:
+    Structure + StructureUpdate + erased_serde::Serialize + Send + Sync
+{
+}
+
+serialize_trait_object!(GameStructure);
+
 /****************************************
 * Structure
 *****************************************/
 
-pub trait Structure: erased_serde::Serialize + Send + Sync {
+pub trait Structure {
     fn get_id(&self) -> usize;
     fn get_position(&self) -> &Vector2;
     fn set_position(&mut self, pos: Vector2);
@@ -23,8 +35,6 @@ pub trait Structure: erased_serde::Serialize + Send + Sync {
     fn inflict_damage(&mut self, damage: f64);
     fn heal(&mut self, amount: f64);
 }
-
-serialize_trait_object!(Structure);
 
 /****************************************
 * Structure Base
@@ -94,19 +104,19 @@ serialize_trait_object!(StructureModel);
 
 #[derive(Serialize, Deserialize, Debug, EnumIter)]
 pub enum StructureType {
-    Grunt,
+    LightningTower,
 }
 
 impl StructureType {
-    pub fn new(self, pos: Vector2) -> Box<dyn Structure> {
+    pub fn new(self, pos: Vector2) -> Box<dyn GameStructure> {
         match self {
-            StructureType::Grunt => Box::new(Grunt::new(pos)),
+            StructureType::LightningTower => Box::new(LightningTower::new(pos)),
         }
     }
 
     fn register_model(&self, model_map: &mut StructureModelMap) {
         match self {
-            StructureType::Grunt => Grunt::register_model(model_map),
+            StructureType::LightningTower => LightningTower::register_model(model_map),
         }
     }
 }

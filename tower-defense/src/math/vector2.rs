@@ -23,6 +23,10 @@ impl Vector2 {
     pub fn y(&self) -> f64 {
         self.y
     }
+
+    pub fn magnitude(&self) -> f64 {
+        (self.x.powi(2) + self.y.powi(2)).sqrt()
+    }
 }
 
 impl<'a> ops::Add for &'a Vector2 {

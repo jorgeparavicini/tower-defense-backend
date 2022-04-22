@@ -1,5 +1,5 @@
 use crate::core::Map;
-use crate::entity::{Enemy, EnemyType, Structure, StructureType};
+use crate::entity::{Enemy, EnemyType, GameStructure, StructureType};
 use crate::math::Vector2;
 use serde::Serialize;
 
@@ -12,7 +12,7 @@ pub struct Game {
     map: &'static Map,
     time: f64,
     enemies: Vec<Enemy>,
-    structures: Vec<Box<dyn Structure>>,
+    structures: Vec<Box<dyn GameStructure>>,
     current_lives: u64,
 }
 
@@ -22,7 +22,7 @@ impl Game {
             map,
             time: 0.0,
             enemies: vec![],
-            structures: vec![StructureType::Grunt.new(Vector2::new(10.0, 100.0))],
+            structures: vec![StructureType::LightningTower.new(Vector2::new(10.0, 100.0))],
             current_lives: map.get_max_lives() - 2,
         }
     }
@@ -34,6 +34,10 @@ impl Game {
 
     pub fn update(&mut self, delta_time: f64) {
         self.time += delta_time;
+        for structure in &mut self.structures {
+            structure.update(&mut self.enemies, self.time);
+        }
+        self.remove_dead_enemies();
         self.move_enemies();
         self.check_enemies_in_base();
     }
@@ -52,6 +56,10 @@ impl Game {
         self.structures.push(structure);
 
         Ok(())
+    }
+
+    fn remove_dead_enemies(&mut self) {
+        self.enemies.retain(|enemy| enemy.get_health() > 0.0)
     }
 
     fn move_enemies(&mut self) {

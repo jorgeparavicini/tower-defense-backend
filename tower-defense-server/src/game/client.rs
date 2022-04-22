@@ -1,7 +1,7 @@
 use crate::game::{ReceiveMessage, SendMessage};
 use futures::stream::SplitStream;
 use futures::StreamExt;
-use log::{debug, error, info, warn};
+use log::{debug, error, info, trace, warn};
 use std::collections::VecDeque;
 use std::error::Error;
 use std::sync::Arc;
@@ -37,6 +37,7 @@ impl Client {
     }
 
     pub fn send_message(&self, message: SendMessage) -> Result<(), Box<dyn Error>> {
+        trace!("Sending message");
         let json = serde_json::to_string(&message)?;
         self.sender.send(Ok(Message::text(json)))?;
 

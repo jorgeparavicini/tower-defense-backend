@@ -1,3 +1,3 @@
-mod grunt;
+mod lightning_tower;
 
-pub(super) use grunt::Grunt;
+pub(super) use lightning_tower::LightningTower;

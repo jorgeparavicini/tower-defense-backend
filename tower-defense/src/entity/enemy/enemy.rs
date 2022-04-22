@@ -44,6 +44,14 @@ impl Enemy {
         self.pos = new_pos;
     }
 
+    pub fn get_health(&self) -> f64 {
+        self.health
+    }
+
+    pub fn apply_damage(&mut self, damage: f64) {
+        self.health -= damage;
+    }
+
     pub fn get_position(&self) -> &Vector2 {
         &self.pos
     }
