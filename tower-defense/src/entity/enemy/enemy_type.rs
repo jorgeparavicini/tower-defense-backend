@@ -2,7 +2,7 @@ use crate::entity::enemy::enemy::{Enemy, EnemyData};
 use crate::entity::enemy::RECRUIT;
 use serde::Serialize;
 
-#[derive(Serialize)]
+#[derive(Serialize, Copy, Clone)]
 pub enum EnemyType {
     Recruit,
 }

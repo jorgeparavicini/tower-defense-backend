@@ -1,7 +1,7 @@
 use crate::game::{ReceiveMessage, SendMessage};
 use futures::stream::SplitStream;
 use futures::StreamExt;
-use log::{debug, error, info, trace, warn};
+use log::{debug, error, trace, warn};
 use std::collections::VecDeque;
 use std::error::Error;
 use std::sync::Arc;
@@ -36,9 +36,9 @@ impl Client {
         std::mem::take(&mut *self.messages.write().await)
     }
 
-    pub fn send_message(&self, message: SendMessage) -> Result<(), Box<dyn Error>> {
+    pub fn send_message(&self, message: &SendMessage) -> Result<(), Box<dyn Error>> {
         trace!("Sending message");
-        let json = serde_json::to_string(&message)?;
+        let json = serde_json::to_string(message)?;
         self.sender.send(Ok(Message::text(json)))?;
 
         Ok(())
@@ -68,7 +68,7 @@ impl Client {
                         result = ReceiveMessage::Ping(pong);
                     }
 
-                    info!("Received message {}", result.to_string());
+                    debug!("Received message {}", result.to_string());
                     message_queue.write().await.push_back(result);
                 } else {
                     error!("Could not read message received: {}", msg.to_str().unwrap());

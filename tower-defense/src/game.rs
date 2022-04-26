@@ -1,5 +1,6 @@
-use crate::core::Map;
 use crate::entity::{Enemy, EnemyType, GameStructure, StructureType};
+use crate::map::Map;
+use crate::map::Wave;
 use crate::math::Vector2;
 use serde::Serialize;
 
@@ -14,6 +15,9 @@ pub struct Game {
     enemies: Vec<Enemy>,
     structures: Vec<Box<dyn GameStructure>>,
     current_lives: u64,
+
+    #[serde(skip_serializing)]
+    wave: Wave,
 }
 
 impl Game {
@@ -22,8 +26,9 @@ impl Game {
             map,
             time: 0.0,
             enemies: vec![],
-            structures: vec![StructureType::LightningTower.new(Vector2::new(10.0, 100.0))],
+            structures: vec![StructureType::LightningTower.new(Vector2::new(100.0, 300.0))],
             current_lives: map.get_max_lives() - 2,
+            wave: Wave::new(map.get_wave_elements()),
         }
     }
 
@@ -36,6 +41,10 @@ impl Game {
         self.time += delta_time;
         for structure in &mut self.structures {
             structure.update(&mut self.enemies, self.time);
+        }
+        if let Some(enemy) = self.wave.update(self.time) {
+            let enemy = enemy.new(self.time);
+            self.enemies.push(enemy);
         }
         self.remove_dead_enemies();
         self.move_enemies();
@@ -65,7 +74,7 @@ impl Game {
     fn move_enemies(&mut self) {
         for enemy in self.enemies.iter_mut() {
             let move_speed = enemy.get_enemy_type().get_enemy_data().get_move_speed();
-            let t = self.time - enemy.get_spawn_time();
+            let t = (self.time - enemy.get_spawn_time()) / 1000.0;
             enemy.set_position(self.map.get_path().coords_at(t * move_speed));
         }
     }
