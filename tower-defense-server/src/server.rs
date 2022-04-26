@@ -1,12 +1,11 @@
 use crate::game::game_server::GameServer;
+use crate::game::Client;
 use futures::{FutureExt, StreamExt};
 use log::error;
-use tokio::{sync::mpsc};
+use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
-use warp::ws::{WebSocket};
-use tower_defense::levels::MAP_LEVEL_1;
-use crate::game::Client;
-
+use tower_defense::map::levels::MAP_LEVEL_1;
+use warp::ws::WebSocket;
 
 pub async fn game_connection(ws: WebSocket) {
     let (client_ws_sender, client_ws_rcv) = ws.split();

@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::fmt::Formatter;
-use tower_defense::core::Map;
 use tower_defense::entity::StructureType;
+use tower_defense::map::Map;
 use tower_defense::math::Vector2;
 use tower_defense::Game;
 

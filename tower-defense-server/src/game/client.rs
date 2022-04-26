@@ -1,7 +1,7 @@
 use crate::game::{ReceiveMessage, SendMessage};
 use futures::stream::SplitStream;
 use futures::StreamExt;
-use log::{debug, error, info, trace, warn};
+use log::{debug, error, trace, warn};
 use std::collections::VecDeque;
 use std::error::Error;
 use std::sync::Arc;
@@ -68,7 +68,7 @@ impl Client {
                         result = ReceiveMessage::Ping(pong);
                     }
 
-                    info!("Received message {}", result.to_string());
+                    debug!("Received message {}", result.to_string());
                     message_queue.write().await.push_back(result);
                 } else {
                     error!("Could not read message received: {}", msg.to_str().unwrap());

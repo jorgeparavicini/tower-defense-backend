@@ -5,7 +5,7 @@ use log::{debug, error, info};
 use std::error::Error;
 use std::time::Instant;
 use tokio::time::{self, Duration, Interval};
-use tower_defense::core::Map;
+use tower_defense::map::Map;
 use tower_defense::Game;
 
 const TICK_RATE: u64 = 30;
@@ -57,8 +57,7 @@ impl GameServer {
 
         let now = Instant::now();
         let delta_time = now - self.last_instant;
-        self.game
-            .update(delta_time.as_micros() as f64 / 1_000_000.0);
+        self.game.update(delta_time.as_micros() as f64 / 1_000.0);
 
         for message in self.client.get_messages().await {
             match message {

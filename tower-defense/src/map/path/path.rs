@@ -23,10 +23,7 @@ impl Line {
 
 impl PathComponent for Line {
     fn length(&self) -> f64 {
-        let v = Vector2::new(
-            self.end.x() - self.start.x(),
-            self.end.y() - self.start.y(),
-        );
+        let v = Vector2::new(self.end.x() - self.start.x(), self.end.y() - self.start.y());
         (v.x().powi(2) + v.y().powi(2)).sqrt()
     }
 
@@ -56,11 +53,7 @@ impl Path {
     pub fn new(path: Vec<Box<dyn PathComponent + Send + Sync>>) -> Path {
         let length = path.iter().map(|x| x.length()).sum();
         let end = path.last().unwrap().end();
-        Path {
-            path,
-            end,
-            length,
-        }
+        Path { path, end, length }
     }
 
     pub fn length(&self) -> f64 {
@@ -99,15 +92,24 @@ fn clamp(t: f64) -> f64 {
 
 #[cfg(test)]
 mod path_tests {
-    use crate::path::{Line, Path};
+    use crate::map::path::{Line, Path};
     use crate::math::Vector2;
 
     #[test]
     fn coords_at() {
         let path = Path::new(vec![
-            Box::new(Line::new(Vector2::new(0.0, 200.0), Vector2::new(100.0, 200.0))),
-            Box::new(Line::new(Vector2::new(100.0, 200.0), Vector2::new(100.0, 100.0))),
-            Box::new(Line::new(Vector2::new(100.0, 100.0), Vector2::new(300.0, 100.0))),
+            Box::new(Line::new(
+                Vector2::new(0.0, 200.0),
+                Vector2::new(100.0, 200.0),
+            )),
+            Box::new(Line::new(
+                Vector2::new(100.0, 200.0),
+                Vector2::new(100.0, 100.0),
+            )),
+            Box::new(Line::new(
+                Vector2::new(100.0, 100.0),
+                Vector2::new(300.0, 100.0),
+            )),
         ]);
 
         //assert_eq!(path.coords_at(0.0), Coords::new(0.0, 10.0));
