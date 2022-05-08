@@ -1,35 +1,60 @@
+use crate::game::server_message::LobbyMessage;
 use crate::game::{ReceiveMessage, SendMessage};
 use futures::stream::SplitStream;
 use futures::StreamExt;
-use log::{debug, error, trace, warn};
+use log::{debug, error, trace};
 use std::collections::VecDeque;
 use std::error::Error;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use tokio::sync::mpsc::Sender;
 use tokio::sync::{mpsc, RwLock};
 use tokio::task::{spawn, JoinHandle};
 use warp::ws::{Message, WebSocket};
 
-pub type ClientSender = mpsc::UnboundedSender<std::result::Result<Message, warp::Error>>;
+pub type ClientSender = mpsc::UnboundedSender<Result<Message, warp::Error>>;
 pub type Messages = Arc<RwLock<VecDeque<ReceiveMessage>>>;
 pub type ClientReceiver = SplitStream<WebSocket>;
 
 // TODO: Graceful shutdown?
 pub struct Client {
     sender: ClientSender,
-    messages: Messages,
+    tx: Sender<LobbyMessage>,
     handle: JoinHandle<()>,
+    is_host: bool,
 }
 
 impl Client {
-    pub fn new(sender: ClientSender, receiver: ClientReceiver) -> Self {
+    fn new(
+        sender: ClientSender,
+        receiver: ClientReceiver,
+        is_host: bool,
+        tx: Sender<LobbyMessage>,
+    ) -> Self {
         let messages = Arc::new(RwLock::new(VecDeque::new()));
         let handle = spawn(Client::client_listener(messages.clone(), receiver));
         Self {
             sender,
-            messages,
+            tx,
             handle,
+            is_host,
         }
+    }
+
+    pub fn new_host(
+        sender: ClientSender,
+        receiver: ClientReceiver,
+        tx: Sender<LobbyMessage>,
+    ) -> Self {
+        Self::new(sender, receiver, true, tx)
+    }
+
+    pub fn new_client(
+        sender: ClientSender,
+        receiver: ClientReceiver,
+        tx: Sender<LobbyMessage>,
+    ) -> Self {
+        Self::new(sender, receiver, false, tx)
     }
 
     pub async fn get_messages(&mut self) -> VecDeque<ReceiveMessage> {
@@ -54,6 +79,14 @@ impl Client {
                 }
             };
 
+            if msg.is_close() {
+                let message = ReceiveMessage::Close;
+                debug!("Sending close signal");
+                message_queue.write().await.push_back(message);
+                debug!("Terminating client listener");
+                break;
+            }
+
             if msg.is_text() {
                 if let Ok(mut result) = serde_json::from_str(msg.to_str().unwrap()) {
                     if let ReceiveMessage::Ping(ping) = result {
@@ -74,15 +107,19 @@ impl Client {
                     error!("Could not read message received: {}", msg.to_str().unwrap());
                 }
             } else {
-                warn!("Received non text message.");
+                error!("Received unrecognized message.");
             }
         }
+    }
+
+    pub fn is_host(&self) -> bool {
+        self.is_host
     }
 }
 
 impl Drop for Client {
     fn drop(&mut self) {
         self.handle.abort();
-        debug!("Terminating client listener");
+        debug!("Aborting client listener");
     }
 }

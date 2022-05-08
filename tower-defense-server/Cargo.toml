@@ -17,3 +17,4 @@ uuid = { version = "0.8.2", features = ["serde", "v4"] }
 tower-defense = { path = "../tower-defense" }
 log = "0.4.14"
 pretty_env_logger = "0.4.0"
+rand = "0.8.5"

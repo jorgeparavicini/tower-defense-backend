@@ -6,6 +6,8 @@ use tower_defense::map::Map;
 use tower_defense::math::Vector2;
 use tower_defense::Game;
 
+pub enum LobbyMessage {}
+
 #[derive(Deserialize, Debug)]
 #[serde(tag = "message", content = "data")]
 pub enum ReceiveMessage {
@@ -14,6 +16,7 @@ pub enum ReceiveMessage {
         structure: StructureType,
         pos: Vector2,
     },
+    Close,
 }
 
 impl fmt::Display for ReceiveMessage {
@@ -28,4 +31,5 @@ pub enum SendMessage<'a> {
     Pong(u64),
     Map(&'a Map),
     Update(&'a Game),
+    GameClosed,
 }

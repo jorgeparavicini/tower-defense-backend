@@ -1,7 +1,7 @@
 use crate::game::client::Client;
 use crate::game::{ReceiveMessage, SendMessage};
 use futures::{stream, StreamExt};
-use log::{debug, error, info};
+use log::{debug, error, info, trace};
 use std::error::Error;
 use std::time::Instant;
 use tokio::time::{self, Duration, Interval};
@@ -12,93 +12,6 @@ const TICK_RATE: u64 = 30;
 
 #[derive(Debug, Clone)]
 struct GameError;
-
-struct Players {
-    host: Client,
-    clients: Vec<Client>,
-}
-
-trait IntoMutIterator {
-    type Item;
-    type IntoIter;
-}
-
-impl Players {
-    fn new(host: Client) -> Self {
-        Self {
-            host,
-            clients: vec![],
-        }
-    }
-}
-
-impl<'a> Players {
-    fn iter_mut(&'a mut self) -> PlayersMutIterator<'a> {
-        PlayersMutIterator {
-            players: self,
-            index: 0,
-        }
-    }
-}
-
-impl<'a> IntoIterator for &'a Players {
-    type Item = &'a Client;
-    type IntoIter = PlayersIterator<'a>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        PlayersIterator {
-            players: self,
-            index: 0,
-        }
-    }
-}
-
-struct PlayersIterator<'a> {
-    players: &'a Players,
-    index: usize,
-}
-
-impl<'a> Iterator for PlayersIterator<'a> {
-    type Item = &'a Client;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let result = match self.index {
-            0 => Some(&self.players.host),
-            _ => self.players.clients.get(self.index - 1),
-        };
-        self.index += 1;
-        result
-    }
-}
-
-struct PlayersMutIterator<'a> {
-    players: &'a mut Players,
-    index: usize,
-}
-
-impl<'a> Iterator for PlayersMutIterator<'a> {
-    type Item = &'a mut Client;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let result = if self.index == 0 {
-            let ptr = &mut self.players.host as *mut Client;
-            unsafe { Some(&mut *ptr) }
-        } else if self.index <= self.players.clients.len() {
-            Some(unsafe {
-                &mut *self
-                    .players
-                    .clients
-                    .as_mut_ptr()
-                    .offset((self.index - 1) as isize)
-            })
-        } else {
-            None
-        };
-
-        self.index += 1;
-        result
-    }
-}
 
 pub struct GameServer {
     players: Players,
@@ -119,10 +32,8 @@ impl GameServer {
 
     pub fn start(self) -> Result<(), Box<dyn Error>> {
         // Send map to clients
-        for client in &self.players {
-            let map_message = SendMessage::Map(self.game.get_map());
-            client.send_message(map_message)?;
-        }
+        let map_message = SendMessage::Map(self.game.get_map());
+        self.broadcast_message(&map_message)?;
 
         tokio::task::spawn(self.game_loop());
         Ok(())
@@ -139,6 +50,8 @@ impl GameServer {
         })
         .for_each(|_| async {})
         .await;
+        // TODO: Identify with id
+        info!("Game loop terminating");
     }
 
     async fn tick(&mut self) -> Result<(), GameError> {
@@ -161,11 +74,27 @@ impl GameServer {
                             // TODO: Send "could not place structure" message to client.
                         }
                     }
+                    ReceiveMessage::Close => {
+                        if client.is_host() {
+                            // TODO: Inform clients
+                            info!("Host disconnected, closing game");
+                            let game_closed_message = SendMessage::GameClosed;
+                            for x in &mut self.players.clients {
+                                if let Err(e) = x.send_message(&game_closed_message) {
+                                    error!("Could not send disconnect message to client");
+                                }
+                            }
+                            return Err(GameError);
+                        } else {
+                            info!("Client disconnected");
+                            // TODO: Inform game and other clients
+                        }
+                    }
                 }
             }
         }
 
-        debug!("Sending message");
+        trace!("Sending message");
         if let Err(_) = self.broadcast_message(&SendMessage::Update(&self.game)) {
             error!("Failed sending broadcast message. Closing game");
             return Err(GameError);
