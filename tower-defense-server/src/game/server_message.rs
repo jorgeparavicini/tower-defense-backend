@@ -2,24 +2,31 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::fmt::Formatter;
 use tower_defense::entity::StructureType;
-use tower_defense::map::Map;
 use tower_defense::math::Vector2;
-use tower_defense::Game;
-
-pub enum LobbyMessage {}
 
 #[derive(Deserialize, Debug)]
 #[serde(tag = "message", content = "data")]
-pub enum ReceiveMessage {
+pub enum IncomingLobbyMessage {
+    Start,
     Ping(u64),
-    PlaceStructure {
-        structure: StructureType,
-        pos: Vector2,
-    },
-    Close,
 }
 
-impl fmt::Display for ReceiveMessage {
+impl fmt::Display for IncomingLobbyMessage {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(tag = "message", content = "data")]
+pub enum LobbyMessage {
+    Start(String),
+    Ping(String, u64),
+    GameMessage(IncomingGameMessage),
+    Disconnect(String),
+}
+
+impl fmt::Display for LobbyMessage {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self)
     }
@@ -27,9 +34,32 @@ impl fmt::Display for ReceiveMessage {
 
 #[derive(Serialize)]
 #[serde(tag = "message", content = "data")]
-pub enum SendMessage<'a> {
+pub enum OutgoingLobbyMessage {
+    Players(Vec<String>),
+    Lobby(String),
     Pong(u64),
-    Map(&'a Map),
-    Update(&'a Game),
     GameClosed,
+    Update(OutgoingGameMessage),
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(tag = "message", content = "data")]
+pub enum IncomingGameMessage {
+    PlaceStructure {
+        structure: StructureType,
+        pos: Vector2,
+    },
+}
+
+impl fmt::Display for IncomingGameMessage {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+#[derive(Serialize)]
+#[serde(tag = "message", content = "data")]
+pub enum OutgoingGameMessage {
+    Map(String),
+    Update(String),
 }

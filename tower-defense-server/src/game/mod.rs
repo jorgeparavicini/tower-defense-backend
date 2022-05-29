@@ -7,4 +7,4 @@ mod server_message;
 pub use client::{Client, ClientReceiver, ClientSender};
 pub use game_lobby::GameLobby;
 pub use game_server::GameServer;
-pub use server_message::{ReceiveMessage, SendMessage};
+pub use server_message::{IncomingGameMessage, OutgoingGameMessage};

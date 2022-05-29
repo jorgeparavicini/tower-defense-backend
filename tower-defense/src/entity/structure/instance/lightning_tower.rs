@@ -103,7 +103,7 @@ impl LightningTower {
     const IDLE_SPRITESHEET: &'static str = "structures/blitz_turm/blitz_turm_v2_idle.png";
     const ATTACK_SPRITESHEET: &'static str = "structures/blitz_turm/blitz_turm_v2.png";
     const ATTACK_RANGE: f64 = 100.0;
-    const ATTACK_DAMAGE: f64 = 30.0;
+    const ATTACK_DAMAGE: f64 = 60.0;
     const ATTACK_COOLDOWN: f64 = 1000.0;
     const ATTACK_DAMAGE_DELAY: f64 = 650.0;
     const ATTACK_DURATION: f64 = 1000.0;
@@ -179,6 +179,7 @@ where
 pub struct LightningTowerModel {
     attack_frames: GifFrames,
     idle_frames: GifFrames,
+    icon: String,
     attack_spritesheet: String,
     idle_spritesheet: String,
     max_health: f64,
@@ -217,6 +218,7 @@ lazy_static! {
         LightningTowerModel {
             attack_frames,
             idle_frames,
+            icon: String::from("structures/blitz_turm/blitz_turm_v2_icon.png"),
             attack_spritesheet: LightningTower::ATTACK_SPRITESHEET.to_string(),
             idle_spritesheet: LightningTower::IDLE_SPRITESHEET.to_string(),
             max_health: LightningTower::MAX_HEALTH,

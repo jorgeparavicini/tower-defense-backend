@@ -12,7 +12,7 @@ trait IntoMutIterator {
 }
 
 impl Players {
-    pub fn new(mut host: Client) -> Self {
+    pub fn new(host: Client) -> Self {
         assert!(host.is_host());
         Self {
             host,
@@ -20,15 +20,31 @@ impl Players {
         }
     }
 
-    pub fn add_client(&mut self, mut client: Client) {
-        client.set_is_host(false);
+    pub fn add_client(&mut self, client: Client) {
         self.clients.push(client);
         debug!("Added client to player list");
+    }
+
+    pub fn remove_client(&mut self, name: &str) {
+        debug_assert!(self.host.get_name() != name);
+        self.clients.retain(|client| client.get_name() != name);
+    }
+
+    pub fn find_client(&self, name: &str) -> Option<&Client> {
+        if self.host.get_name() == name {
+            return Some(&self.host);
+        }
+
+        self.clients.iter().find(|client| client.get_name() == name)
+    }
+
+    pub fn get_host(&self) -> &Client {
+        &self.host
     }
 }
 
 impl<'a> Players {
-    fn iter_mut(&'a mut self) -> PlayersMutIterator<'a> {
+    pub(crate) fn iter_mut(&'a mut self) -> PlayersMutIterator<'a> {
         PlayersMutIterator {
             players: self,
             index: 0,
@@ -48,7 +64,7 @@ impl<'a> IntoIterator for &'a Players {
     }
 }
 
-struct PlayersIterator<'a> {
+pub struct PlayersIterator<'a> {
     players: &'a Players,
     index: usize,
 }
@@ -66,7 +82,7 @@ impl<'a> Iterator for PlayersIterator<'a> {
     }
 }
 
-struct PlayersMutIterator<'a> {
+pub struct PlayersMutIterator<'a> {
     players: &'a mut Players,
     index: usize,
 }

@@ -1,67 +1,71 @@
-use crate::game::server_message::LobbyMessage;
-use crate::game::{ReceiveMessage, SendMessage};
+use crate::game::server_message::{IncomingLobbyMessage, LobbyMessage, OutgoingLobbyMessage};
+use crate::game::IncomingGameMessage;
 use futures::stream::SplitStream;
-use futures::StreamExt;
-use log::{debug, error, trace};
+use futures::{FutureExt, StreamExt};
+use log::{debug, error, info, trace};
+use names::Generator;
 use std::collections::VecDeque;
 use std::error::Error;
-use std::sync::Arc;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use tokio::sync::mpsc;
 use tokio::sync::mpsc::Sender;
-use tokio::sync::{mpsc, RwLock};
 use tokio::task::{spawn, JoinHandle};
+use tokio_stream::wrappers::UnboundedReceiverStream;
 use warp::ws::{Message, WebSocket};
 
 pub type ClientSender = mpsc::UnboundedSender<Result<Message, warp::Error>>;
-pub type Messages = Arc<RwLock<VecDeque<ReceiveMessage>>>;
 pub type ClientReceiver = SplitStream<WebSocket>;
 
 // TODO: Graceful shutdown?
 pub struct Client {
     sender: ClientSender,
-    tx: Sender<LobbyMessage>,
     handle: JoinHandle<()>,
     is_host: bool,
+    name: String,
 }
 
 impl Client {
-    fn new(
-        sender: ClientSender,
-        receiver: ClientReceiver,
-        is_host: bool,
-        tx: Sender<LobbyMessage>,
-    ) -> Self {
-        let messages = Arc::new(RwLock::new(VecDeque::new()));
-        let handle = spawn(Client::client_listener(messages.clone(), receiver));
+    fn new(ws: WebSocket, is_host: bool, tx: Sender<LobbyMessage>) -> Self {
+        let name = Generator::default().next().unwrap();
+        let (sender, receiver) = Self::start_ws_forwarder(ws, name.clone());
+        let handle = spawn(Client::client_listener(tx, receiver, name.clone()));
+
+        info!("Client connected");
         Self {
             sender,
-            tx,
             handle,
             is_host,
+            name,
         }
     }
 
-    pub fn new_host(
-        sender: ClientSender,
-        receiver: ClientReceiver,
-        tx: Sender<LobbyMessage>,
-    ) -> Self {
-        Self::new(sender, receiver, true, tx)
+    fn start_ws_forwarder(ws: WebSocket, name: String) -> (ClientSender, ClientReceiver) {
+        let (client_ws_sender, receiver) = ws.split();
+        let (sender, client_rcv) = mpsc::unbounded_channel();
+        let client_rcv = UnboundedReceiverStream::new(client_rcv);
+
+        tokio::task::spawn(client_rcv.forward(client_ws_sender).map(move |result| {
+            if let Err(e) = result {
+                error!("Error sending message: {} to client {}", e, &name);
+            }
+        }));
+
+        (sender, receiver)
     }
 
-    pub fn new_client(
-        sender: ClientSender,
-        receiver: ClientReceiver,
-        tx: Sender<LobbyMessage>,
-    ) -> Self {
-        Self::new(sender, receiver, false, tx)
+    pub fn new_host(ws: WebSocket, tx: Sender<LobbyMessage>) -> Self {
+        Self::new(ws, true, tx)
     }
 
-    pub async fn get_messages(&mut self) -> VecDeque<ReceiveMessage> {
-        std::mem::take(&mut *self.messages.write().await)
+    pub fn new_client(ws: WebSocket, tx: Sender<LobbyMessage>) -> Self {
+        Self::new(ws, false, tx)
     }
 
-    pub fn send_message(&self, message: &SendMessage) -> Result<(), Box<dyn Error>> {
+    pub async fn get_messages(&mut self) -> VecDeque<IncomingGameMessage> {
+        //std::mem::take(&mut *self.messages.write().await)
+        return VecDeque::new();
+    }
+
+    pub fn send_message(&self, message: &OutgoingLobbyMessage) -> Result<(), Box<dyn Error>> {
         trace!("Sending message");
         let json = serde_json::to_string(message)?;
         self.sender.send(Ok(Message::text(json)))?;
@@ -69,7 +73,11 @@ impl Client {
         Ok(())
     }
 
-    async fn client_listener(message_queue: Messages, mut receiver: ClientReceiver) {
+    async fn client_listener(
+        tx: Sender<LobbyMessage>,
+        mut receiver: ClientReceiver,
+        client: String,
+    ) {
         while let Some(result) = receiver.next().await {
             let msg = match result {
                 Ok(msg) => msg,
@@ -80,16 +88,25 @@ impl Client {
             };
 
             if msg.is_close() {
-                let message = ReceiveMessage::Close;
-                debug!("Sending close signal");
-                message_queue.write().await.push_back(message);
-                debug!("Terminating client listener");
+                let message = LobbyMessage::Disconnect(client.clone());
+                info!("Client {} disconnected", &client);
+                Self::send(&tx, message, &client).await;
                 break;
             }
 
             if msg.is_text() {
-                if let Ok(mut result) = serde_json::from_str(msg.to_str().unwrap()) {
-                    if let ReceiveMessage::Ping(ping) = result {
+                if let Ok(result) = serde_json::from_str(msg.to_str().unwrap()) {
+                    let message = LobbyMessage::GameMessage(result);
+                    Self::send(&tx, message, &client).await;
+                } else if let Ok(result) = serde_json::from_str(msg.to_str().unwrap()) {
+                    let message = match result {
+                        IncomingLobbyMessage::Start => LobbyMessage::Start(client.clone()),
+                        IncomingLobbyMessage::Ping(n) => LobbyMessage::Ping(client.clone(), n),
+                    };
+                    Self::send(&tx, message, &client).await;
+                }
+                /*if let Ok(mut result) = serde_json::from_str(msg.to_str().unwrap()) {
+                    if let IncomingGameMessage::Ping(ping) = result {
                         let ping = Duration::from_millis(ping);
                         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
                         let pong = if now > ping {
@@ -98,12 +115,13 @@ impl Client {
                             Duration::from_millis(0)
                         }
                         .as_millis() as u64;
-                        result = ReceiveMessage::Ping(pong);
+                        result = IncomingGameMessage::Ping(pong);
                     }
 
                     debug!("Received message {}", result.to_string());
-                    message_queue.write().await.push_back(result);
-                } else {
+                    //tx.send(result);
+                }*/
+                else {
                     error!("Could not read message received: {}", msg.to_str().unwrap());
                 }
             } else {
@@ -114,6 +132,19 @@ impl Client {
 
     pub fn is_host(&self) -> bool {
         self.is_host
+    }
+
+    pub fn get_name(&self) -> &str {
+        &self.name
+    }
+
+    async fn send(tx: &Sender<LobbyMessage>, message: LobbyMessage, client: &str) {
+        if let Err(e) = tx.send(message).await {
+            error!(
+                "Client message send failure. Client: {}, error: {}",
+                client, e
+            );
+        }
     }
 }
 

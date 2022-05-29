@@ -18,3 +18,5 @@ tower-defense = { path = "../tower-defense" }
 log = "0.4.14"
 pretty_env_logger = "0.4.0"
 rand = "0.8.5"
+names = { version = "0.13.0", default-features = false }
+lazy_static = "1.4.0"
