@@ -114,6 +114,10 @@ impl GameServer {
                     error!("Could not place structure");
                 }
             }
+            IncomingGameMessage::UpgradeStructure { id } => {
+                // TODO: Money
+                self.game.upgrade_structure(id);
+            }
         }
     }
 

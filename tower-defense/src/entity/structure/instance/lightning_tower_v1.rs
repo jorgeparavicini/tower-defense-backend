@@ -22,7 +22,7 @@ enum State {
 }
 
 impl State {
-    fn update(self, enemies: &mut Vec<Enemy>, time: f64, tower: &LightningTower) -> Self {
+    fn update(self, enemies: &mut Vec<Enemy>, time: f64, tower: &LightningTowerV1) -> Self {
         match self {
             Self::Idle => self.idle_update(enemies, time, tower),
             Self::Attack {
@@ -33,7 +33,7 @@ impl State {
         }
     }
 
-    fn idle_update(self, enemies: &mut Vec<Enemy>, time: f64, tower: &LightningTower) -> Self {
+    fn idle_update(self, enemies: &mut Vec<Enemy>, time: f64, tower: &LightningTowerV1) -> Self {
         for enemy in enemies.iter() {
             if (&tower.get_offset_position() - enemy.get_position()).magnitude()
                 < tower.model.attack_range
@@ -54,7 +54,7 @@ impl State {
         did_attack: bool,
         enemies: &mut Vec<Enemy>,
         time: f64,
-        tower: &LightningTower,
+        tower: &LightningTowerV1,
     ) -> Self {
         if (attack_start + tower.model.attack_duration) < time {
             return Self::Cooldown { attack_end: time };
@@ -77,7 +77,7 @@ impl State {
         self
     }
 
-    fn cooldown_update(self, attack_end: f64, time: f64, tower: &LightningTower) -> Self {
+    fn cooldown_update(self, attack_end: f64, time: f64, tower: &LightningTowerV1) -> Self {
         if (attack_end + tower.model.attack_cooldown) < time {
             return self;
         }
@@ -87,22 +87,22 @@ impl State {
 }
 
 /****************************************
-* Lightning Tower
+* Lightning Tower v1
 *****************************************/
 
 #[derive(Serialize)]
-pub struct LightningTower {
+pub struct LightningTowerV1 {
     #[serde(flatten)]
     base: StructureBase,
     #[serde(serialize_with = "model_serialize")]
-    model: &'static LightningTowerModel,
+    model: &'static LightningTowerV1Model,
     state: Option<State>,
 }
 
-impl LightningTower {
+impl LightningTowerV1 {
     const MAX_HEALTH: f64 = 100.0;
-    const IDLE_SPRITESHEET: &'static str = "structures/blitz_turm/blitz_turm_v2_idle.png";
-    const ATTACK_SPRITESHEET: &'static str = "structures/blitz_turm/blitz_turm_v2.png";
+    const IDLE_SPRITESHEET: &'static str = "structures/blitz_turm/blitz_turm_v1.png";
+    const ATTACK_SPRITESHEET: &'static str = "structures/blitz_turm/blitz_turm_v1_attack.png";
     const RADIUS: f64 = 20.0;
     const Y_OFFSET: f64 = 50.0;
     const ATTACK_RANGE: f64 = 50.0;
@@ -112,7 +112,7 @@ impl LightningTower {
     const ATTACK_DURATION: f64 = 1000.0;
 }
 
-impl Structure for LightningTower {
+impl Structure for LightningTowerV1 {
     fn get_id(&self) -> usize {
         self.base.get_id()
     }
@@ -123,7 +123,7 @@ impl Structure for LightningTower {
 
     fn get_offset_position(&self) -> Vector2 {
         let pos = self.base.get_position();
-        Vector2::new(pos.x(), pos.y() - LightningTower::Y_OFFSET)
+        Vector2::new(pos.x(), pos.y() - LightningTowerV1::Y_OFFSET)
     }
 
     fn set_position(&mut self, pos: Vector2) {
@@ -135,7 +135,7 @@ impl Structure for LightningTower {
     }
 
     fn get_upgrade(&self) -> Option<StructureType> {
-        None
+        Some(StructureType::LightningTower)
     }
 
     fn get_health(&self) -> f64 {
@@ -151,7 +151,7 @@ impl Structure for LightningTower {
     }
 }
 
-impl StructureUpdate for LightningTower {
+impl StructureUpdate for LightningTowerV1 {
     fn update(&mut self, enemies: &mut Vec<Enemy>, time: f64) {
         if let Some(s) = self.state.take() {
             self.state = Some(s.update(enemies, time, self));
@@ -159,40 +159,40 @@ impl StructureUpdate for LightningTower {
     }
 }
 
-impl GameStructure for LightningTower {}
+impl GameStructure for LightningTowerV1 {}
 
-impl StructureFactory for LightningTower {
+impl StructureFactory for LightningTowerV1 {
     fn new(pos: Vector2) -> Self {
-        let base = StructureBase::new(LightningTower::MAX_HEALTH, pos, LightningTower::RADIUS);
-        LightningTower {
+        let base = StructureBase::new(LightningTowerV1::MAX_HEALTH, pos, LightningTowerV1::RADIUS);
+        LightningTowerV1 {
             base,
-            model: &LIGHTNING_TOWER_MODEL,
+            model: &LIGHTNING_TOWER_V1_MODEL,
             state: Some(State::Idle),
         }
     }
 }
 
-impl RegisterStructureModel for LightningTower {
+impl RegisterStructureModel for LightningTowerV1 {
     fn register_model(model_map: &mut StructureModelMap) {
         model_map.insert(
-            String::from("LightningTower"),
-            Box::new((*LIGHTNING_TOWER_MODEL).clone()) as Box<dyn StructureModel + 'static>,
+            String::from("LightningTowerV1"),
+            Box::new((*LIGHTNING_TOWER_V1_MODEL).clone()) as Box<dyn StructureModel + 'static>,
         );
     }
 }
 
-fn model_serialize<S>(_x: &LightningTowerModel, s: S) -> Result<S::Ok, S::Error>
+fn model_serialize<S>(_x: &LightningTowerV1Model, s: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
 {
-    s.serialize_str("LightningTower")
+    s.serialize_str("LightningTowerV1")
 }
 
 /****************************************
-* Lightning Tower Model
+* Lightning Tower V1 Model
 *****************************************/
 #[derive(Serialize, Clone)]
-pub struct LightningTowerModel {
+pub struct LightningTowerV1Model {
     attack_frames: GifFrames,
     idle_frames: GifFrames,
     icon: String,
@@ -211,48 +211,48 @@ pub struct LightningTowerModel {
     level: i64,
 }
 
-impl StructureModel for LightningTowerModel {}
+impl StructureModel for LightningTowerV1Model {}
 
 /****************************************
 * Static
 *****************************************/
 
 lazy_static! {
-    static ref LIGHTNING_TOWER_MODEL: LightningTowerModel = {
-        let file = File::open("resources/www/structures/blitz_turm/blitz_turm_v2.json")
-            .expect("Could not find json file for Blitz Turm");
+    static ref LIGHTNING_TOWER_V1_MODEL: LightningTowerV1Model = {
+        let file = File::open("resources/www/structures/blitz_turm/blitz_turm_v1_attack.json")
+            .expect("Could not find json file for Blitz Turm V1");
         let reader = BufReader::new(file);
         let attack_frames = serde_json::from_reader(reader)
-            .expect("Could not parse gif frames for Lightning tower attack animation");
+            .expect("Could not parse gif frames for Lightning tower v1 attack animation");
 
-        let file = File::open("resources/www/structures/blitz_turm/blitz_turm_v2_idle.json")
-            .expect("Could not find json file for Blitz Turm");
+        let file = File::open("resources/www/structures/blitz_turm/blitz_turm_v1.json")
+            .expect("Could not find json file for Blitz Turm V1");
         let reader = BufReader::new(file);
         let idle_frames = serde_json::from_reader(reader)
-            .expect("Could not parse gif frames for Lightning tower idle animation");
+            .expect("Could not parse gif frames for Lightning tower v1 idle animation");
 
         // The attack damage delay is the time it takes from the animation start until the damage
         // is applied. If it were longer than the entire attack duration the damage would
         // never get applied.
-        debug_assert!(LightningTower::ATTACK_DAMAGE_DELAY < LightningTower::ATTACK_DURATION);
+        debug_assert!(LightningTowerV1::ATTACK_DAMAGE_DELAY < LightningTowerV1::ATTACK_DURATION);
 
-        LightningTowerModel {
+        LightningTowerV1Model {
             attack_frames,
             idle_frames,
-            icon: String::from("structures/blitz_turm/blitz_turm_v2_icon.png"),
-            attack_spritesheet: LightningTower::ATTACK_SPRITESHEET.to_string(),
-            idle_spritesheet: LightningTower::IDLE_SPRITESHEET.to_string(),
-            radius: LightningTower::RADIUS,
-            max_health: LightningTower::MAX_HEALTH,
-            attack_range: LightningTower::ATTACK_RANGE,
-            attack_damage: LightningTower::ATTACK_DAMAGE,
-            attack_cooldown: LightningTower::ATTACK_COOLDOWN,
-            attack_damage_delay: LightningTower::ATTACK_DAMAGE_DELAY,
-            attack_duration: LightningTower::ATTACK_DURATION,
-            can_be_bought: false,
-            can_be_upgraded: false,
+            icon: String::from("structures/blitz_turm/blitz_turm_v1_icon.png"),
+            attack_spritesheet: LightningTowerV1::ATTACK_SPRITESHEET.to_string(),
+            idle_spritesheet: LightningTowerV1::IDLE_SPRITESHEET.to_string(),
+            radius: LightningTowerV1::RADIUS,
+            max_health: LightningTowerV1::MAX_HEALTH,
+            attack_range: LightningTowerV1::ATTACK_RANGE,
+            attack_damage: LightningTowerV1::ATTACK_DAMAGE,
+            attack_cooldown: LightningTowerV1::ATTACK_COOLDOWN,
+            attack_damage_delay: LightningTowerV1::ATTACK_DAMAGE_DELAY,
+            attack_duration: LightningTowerV1::ATTACK_DURATION,
+            can_be_bought: true,
+            can_be_upgraded: true,
             name: String::from("Lightning Tower"),
-            level: 2
+            level: 1
         }
     };
 }

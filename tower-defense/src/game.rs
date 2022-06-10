@@ -2,6 +2,7 @@ use crate::entity::{Enemy, EnemyType, GameStructure, StructureType};
 use crate::map::Map;
 use crate::map::Wave;
 use crate::math::Vector2;
+use log::info;
 use serde::Serialize;
 
 #[derive(Debug, Clone)]
@@ -12,6 +13,10 @@ pub struct GameError {
 impl GameError {
     pub fn new(message: String) -> Self {
         Self { message }
+    }
+
+    pub fn message(&self) -> &str {
+        &self.message
     }
 }
 
@@ -34,7 +39,7 @@ impl Game {
             map,
             time: 0.0,
             enemies: vec![],
-            structures: vec![StructureType::LightningTower.new(Vector2::new(100.0, 300.0))],
+            structures: vec![StructureType::LightningTowerV1.new(Vector2::new(100.0, 300.0))],
             current_lives: map.get_max_lives() - 2,
             wave: Wave::new(map.get_wave_elements()),
         }
@@ -81,6 +86,29 @@ impl Game {
 
         self.structures.push(new_structure);
         Ok(())
+    }
+
+    pub fn upgrade_structure(&mut self, id: usize) -> Result<(), GameError> {
+        let mut new_structure = None;
+        let mut pos = Vector2::new(0.0, 0.0);
+        self.structures.retain(|structure| {
+            if id == structure.get_id() {
+                new_structure = structure.get_upgrade();
+                if let Some(_) = &new_structure {
+                    pos = structure.get_position().clone();
+                    return false;
+                }
+            }
+
+            true
+        });
+
+        if let Some(structure) = new_structure {
+            self.structures.push(structure.new(pos));
+            return Ok(());
+        }
+
+        Err(GameError::new(String::from("Could not upgrade")))
     }
 
     fn remove_dead_enemies(&mut self) {

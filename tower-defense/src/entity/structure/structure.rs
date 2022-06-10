@@ -1,4 +1,5 @@
 use crate::entity::structure::LightningTower;
+use crate::entity::structure::LightningTowerV1;
 use crate::entity::Enemy;
 use crate::math::Vector2;
 use serde::{Deserialize, Serialize};
@@ -32,6 +33,7 @@ pub trait Structure {
     fn get_offset_position(&self) -> Vector2;
     fn set_position(&mut self, pos: Vector2);
     fn get_radius(&self) -> &f64;
+    fn get_upgrade(&self) -> Option<StructureType>;
 
     fn get_health(&self) -> f64;
     fn inflict_damage(&mut self, damage: f64);
@@ -85,6 +87,10 @@ impl Structure for StructureBase {
         &self.radius
     }
 
+    fn get_upgrade(&self) -> Option<StructureType> {
+        None
+    }
+
     fn get_health(&self) -> f64 {
         self.health
     }
@@ -120,18 +126,21 @@ serialize_trait_object!(StructureModel);
 
 #[derive(Serialize, Deserialize, Debug, EnumIter)]
 pub enum StructureType {
+    LightningTowerV1,
     LightningTower,
 }
 
 impl StructureType {
     pub fn new(self, pos: Vector2) -> Box<dyn GameStructure> {
         match self {
+            StructureType::LightningTowerV1 => Box::new(LightningTowerV1::new(pos)),
             StructureType::LightningTower => Box::new(LightningTower::new(pos)),
         }
     }
 
     fn register_model(&self, model_map: &mut StructureModelMap) {
         match self {
+            StructureType::LightningTowerV1 => LightningTowerV1::register_model(model_map),
             StructureType::LightningTower => LightningTower::register_model(model_map),
         }
     }

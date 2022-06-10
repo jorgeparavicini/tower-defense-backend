@@ -49,6 +49,9 @@ pub enum IncomingGameMessage {
         structure: StructureType,
         pos: Vector2,
     },
+    UpgradeStructure {
+        id: usize,
+    },
 }
 
 impl fmt::Display for IncomingGameMessage {
