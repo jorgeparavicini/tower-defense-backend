@@ -1,5 +1,4 @@
 use crate::map::path::Path;
-use crate::map::wave::WaveElement;
 use crate::math::Rect;
 use serde::Serialize;
 
@@ -21,9 +20,6 @@ pub struct Map {
 
     #[serde(skip_serializing)]
     base: Rect,
-
-    #[serde(skip_serializing)]
-    wave: Vec<WaveElement>,
 }
 
 impl Size {
@@ -40,7 +36,6 @@ impl Map {
         max_lives: u64,
         path: Path,
         base: Rect,
-        wave: Vec<WaveElement>,
     ) -> Map {
         Map {
             background_image,
@@ -49,7 +44,6 @@ impl Map {
             max_lives,
             path,
             base,
-            wave,
         }
     }
 
@@ -67,9 +61,5 @@ impl Map {
 
     pub fn get_base(&self) -> &Rect {
         &self.base
-    }
-
-    pub fn get_wave_elements(&self) -> Vec<WaveElement> {
-        self.wave.clone()
     }
 }

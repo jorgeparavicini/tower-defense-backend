@@ -1,6 +1,5 @@
 use crate::entity::EnemyType;
 use crate::map::path::{Line, Path};
-use crate::map::wave::WaveElement;
 use crate::map::{Map, Size};
 use crate::math::{Rect, Vector2};
 
@@ -37,11 +36,6 @@ lazy_static! {
             )),
         ]);
 
-        let wave = vec![
-            WaveElement::new(500.0, EnemyType::Recruit),
-            WaveElement::new(1000.0, EnemyType::Recruit),
-        ];
-
         Map::new(
             String::from("map_1/map_1.png"),
             String::from("map_1/stone_filler.png"),
@@ -53,7 +47,6 @@ lazy_static! {
                 Vector2::new(600.0, 170.0),
                 Vector2::new(550.0, 190.0),
             ),
-            wave,
         )
     };
 }

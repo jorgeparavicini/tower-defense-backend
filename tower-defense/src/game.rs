@@ -41,7 +41,7 @@ impl Game {
             enemies: vec![],
             structures: vec![StructureType::LightningTowerV1.new(Vector2::new(100.0, 300.0))],
             current_lives: map.get_max_lives() - 2,
-            wave: Wave::new(map.get_wave_elements()),
+            wave: Wave::new(300.0, 1500.0),
         }
     }
 
@@ -55,7 +55,7 @@ impl Game {
         for structure in &mut self.structures {
             structure.update(&mut self.enemies, self.time);
         }
-        if let Some(enemy) = self.wave.update(self.time) {
+        if let Some(enemy) = self.wave.update(delta_time) {
             let enemy = enemy.new(self.time);
             self.enemies.push(enemy);
         }

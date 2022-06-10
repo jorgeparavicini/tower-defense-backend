@@ -1,34 +1,28 @@
 use crate::entity::EnemyType;
-use std::collections::VecDeque;
-
-#[derive(Copy, Clone)]
-pub struct WaveElement {
-    spawn_time: f64,
-    enemy: EnemyType,
-}
-
-impl WaveElement {
-    pub fn new(spawn_time: f64, enemy: EnemyType) -> Self {
-        WaveElement { spawn_time, enemy }
-    }
-}
+use log::info;
+use rand::Rng;
 
 pub struct Wave {
-    elements: VecDeque<WaveElement>,
+    min_respawn_duration: f64,
+    max_respawn_duration: f64,
+    next_respawn: f64,
 }
 
 impl Wave {
-    pub fn new(elements: Vec<WaveElement>) -> Self {
+    pub fn new(min_respawn_duration: f64, max_respawn_duration: f64) -> Self {
         Wave {
-            elements: VecDeque::from(elements),
+            min_respawn_duration,
+            max_respawn_duration,
+            next_respawn: 0.0,
         }
     }
 
-    pub fn update(&mut self, time: f64) -> Option<EnemyType> {
-        if let Some(element) = self.elements.get(0) {
-            if element.spawn_time <= time {
-                return Some(self.elements.pop_front().unwrap().enemy);
-            }
+    pub fn update(&mut self, delta_time: f64) -> Option<EnemyType> {
+        self.next_respawn -= delta_time;
+        if self.next_respawn < 0.0 {
+            self.next_respawn =
+                rand::thread_rng().gen_range(self.min_respawn_duration..self.max_respawn_duration);
+            return Some(EnemyType::random());
         }
 
         None
