@@ -73,24 +73,10 @@ impl GameServer {
 
         let now = Instant::now();
         let delta_time = now - self.last_instant;
-        self.game.update(delta_time.as_micros() as f64 / 1_000.0);
+        let gold_earned = self.game.update(delta_time.as_micros() as f64 / 1_000.0);
 
-        /*for client in &mut self.players.iter_mut() {
-            for message in client.get_messages().await {
-                //match message {
-                /*IncomingGameMessage::Ping(ping) => {
-                    /*if let Err(e) = client.send_message(&SendMessage::Pong(ping)) {
-                        error!("Could not send pong message: {}", e);
-                    }*/
-                }
-                IncomingGameMessage::PlaceStructure { structure, pos } => {
-                    if let Err(_) = self.game.try_place_structure(structure, pos) {
-                        // TODO: Send "could not place structure" message to client.
-                    }
-                }*/
-                //}
-            }
-        }*/
+        self.broadcast_message(OutgoingGameMessage::CoinsReceived(gold_earned))
+            .await;
 
         trace!("Sending message");
         match serde_json::to_string(&self.game) {
@@ -110,6 +96,8 @@ impl GameServer {
     pub fn handle_game_message(&mut self, message: IncomingGameMessage) {
         match message {
             IncomingGameMessage::PlaceStructure { structure, pos } => {
+                let cost = structure.get_model().get_cost();
+
                 if let Err(_) = self.game.try_place_structure(structure, pos) {
                     error!("Could not place structure");
                 }

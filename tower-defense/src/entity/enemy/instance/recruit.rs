@@ -7,6 +7,7 @@ impl Recruit {
     const MAX_HEALTH: f64 = 100.0;
     const DAMAGE: u64 = 1;
     const MOVE_SPEED: f64 = 50.0;
+    const REWARD: usize = 100;
 }
 
 impl EnemyData for Recruit {
@@ -20,6 +21,10 @@ impl EnemyData for Recruit {
 
     fn get_move_speed(&self) -> f64 {
         Recruit::MOVE_SPEED
+    }
+
+    fn get_coin_reward(&self) -> usize {
+        Recruit::REWARD
     }
 }
 

@@ -209,16 +209,21 @@ pub struct LightningTowerModel {
     can_be_upgraded: bool,
     name: String,
     level: i64,
+    cost: usize,
 }
 
-impl StructureModel for LightningTowerModel {}
+impl StructureModel for LightningTowerModel {
+    fn get_cost(&self) -> usize {
+        self.cost
+    }
+}
 
 /****************************************
 * Static
 *****************************************/
 
 lazy_static! {
-    static ref LIGHTNING_TOWER_MODEL: LightningTowerModel = {
+    pub static ref LIGHTNING_TOWER_MODEL: LightningTowerModel = {
         let file = File::open("resources/www/structures/blitz_turm/blitz_turm_v2.json")
             .expect("Could not find json file for Blitz Turm");
         let reader = BufReader::new(file);
@@ -252,7 +257,8 @@ lazy_static! {
             can_be_bought: false,
             can_be_upgraded: false,
             name: String::from("Lightning Tower"),
-            level: 2
+            level: 2,
+            cost: 300
         }
     };
 }

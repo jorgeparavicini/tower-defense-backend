@@ -105,9 +105,9 @@ impl LightningTowerV1 {
     const ATTACK_SPRITESHEET: &'static str = "structures/blitz_turm/blitz_turm_v1_attack.png";
     const RADIUS: f64 = 20.0;
     const Y_OFFSET: f64 = 50.0;
-    const ATTACK_RANGE: f64 = 50.0;
-    const ATTACK_DAMAGE: f64 = 60.0;
-    const ATTACK_COOLDOWN: f64 = 1000.0;
+    const ATTACK_RANGE: f64 = 35.0;
+    const ATTACK_DAMAGE: f64 = 30.0;
+    const ATTACK_COOLDOWN: f64 = 3000.0;
     const ATTACK_DAMAGE_DELAY: f64 = 650.0;
     const ATTACK_DURATION: f64 = 1000.0;
 }
@@ -209,16 +209,21 @@ pub struct LightningTowerV1Model {
     can_be_upgraded: bool,
     name: String,
     level: i64,
+    cost: usize,
 }
 
-impl StructureModel for LightningTowerV1Model {}
+impl StructureModel for LightningTowerV1Model {
+    fn get_cost(&self) -> usize {
+        self.cost
+    }
+}
 
 /****************************************
 * Static
 *****************************************/
 
 lazy_static! {
-    static ref LIGHTNING_TOWER_V1_MODEL: LightningTowerV1Model = {
+    pub static ref LIGHTNING_TOWER_V1_MODEL: LightningTowerV1Model = {
         let file = File::open("resources/www/structures/blitz_turm/blitz_turm_v1_attack.json")
             .expect("Could not find json file for Blitz Turm V1");
         let reader = BufReader::new(file);
@@ -252,7 +257,8 @@ lazy_static! {
             can_be_bought: true,
             can_be_upgraded: true,
             name: String::from("Lightning Tower"),
-            level: 1
+            level: 1,
+            cost: 150
         }
     };
 }

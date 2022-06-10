@@ -22,7 +22,7 @@ impl fmt::Display for IncomingLobbyMessage {
 pub enum LobbyMessage {
     Start(String),
     Ping(String, u64),
-    GameMessage(IncomingGameMessage),
+    GameMessage(IncomingGameMessage, String),
     Disconnect(String),
 }
 
@@ -40,6 +40,7 @@ pub enum OutgoingLobbyMessage {
     Pong(u64),
     GameClosed,
     Update(OutgoingGameMessage),
+    ClientUpdate(OutgoingGameMessage, usize),
 }
 
 #[derive(Deserialize, Debug)]
@@ -60,9 +61,10 @@ impl fmt::Display for IncomingGameMessage {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 #[serde(tag = "message", content = "data")]
 pub enum OutgoingGameMessage {
     Map(String),
     Update(String),
+    CoinsReceived(usize),
 }

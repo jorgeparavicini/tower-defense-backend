@@ -1,3 +1,4 @@
+use crate::entity::structure::instance::{LIGHTNING_TOWER_MODEL, LIGHTNING_TOWER_V1_MODEL};
 use crate::entity::structure::LightningTower;
 use crate::entity::structure::LightningTowerV1;
 use crate::entity::Enemy;
@@ -112,7 +113,9 @@ pub trait StructureFactory {
     fn new(pos: Vector2) -> Self;
 }
 
-pub trait StructureModel: Sync + Send + erased_serde::Serialize {}
+pub trait StructureModel: Sync + Send + erased_serde::Serialize {
+    fn get_cost(&self) -> usize;
+}
 
 pub trait RegisterStructureModel {
     fn register_model(model_map: &mut StructureModelMap);
@@ -142,6 +145,13 @@ impl StructureType {
         match self {
             StructureType::LightningTowerV1 => LightningTowerV1::register_model(model_map),
             StructureType::LightningTower => LightningTower::register_model(model_map),
+        }
+    }
+
+    pub fn get_model(&self) -> Box<&dyn StructureModel> {
+        match self {
+            StructureType::LightningTowerV1 => Box::new(&*LIGHTNING_TOWER_V1_MODEL),
+            StructureType::LightningTower => Box::new(&*LIGHTNING_TOWER_MODEL),
         }
     }
 }

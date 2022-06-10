@@ -10,6 +10,7 @@ use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::{mpsc, Mutex};
 use tokio::task::JoinHandle;
 use tower_defense::map::levels::MAP_LEVEL_1;
+use warp::any;
 use warp::ws::WebSocket;
 
 pub struct GameLobby {
@@ -65,8 +66,8 @@ impl GameLobby {
             match result {
                 LobbyMessage::Start(name) => Self::start_game(&games, &id, name).await,
                 LobbyMessage::Ping(name, n) => Self::handle_ping(&games, &id, name, n).await,
-                LobbyMessage::GameMessage(data) => {
-                    Self::handle_game_message(&games, &id, data).await
+                LobbyMessage::GameMessage(data, client) => {
+                    Self::handle_game_message(&games, &id, data, client).await
                 }
                 LobbyMessage::Disconnect(name) => Self::handle_disconnect(&games, &id, name).await,
             }
@@ -76,7 +77,11 @@ impl GameLobby {
     async fn handle_game_events(games: GamesDb, id: String, mut rx: Receiver<OutgoingGameMessage>) {
         while let Some(result) = rx.recv().await {
             if let Some(game) = games.lock().await.get_mut(&id) {
-                game.broadcast_message(&OutgoingLobbyMessage::Update(result), None);
+                if let OutgoingGameMessage::CoinsReceived(coins) = result {
+                    game.receive_coins(coins);
+                } else {
+                    game.broadcast_message(&OutgoingLobbyMessage::Update(result), None);
+                }
             } else {
                 error!("Could not find game from handle game events");
             }
@@ -114,7 +119,12 @@ impl GameLobby {
         }
     }
 
-    async fn handle_game_message(games: &GamesDb, id: &str, data: IncomingGameMessage) {
+    async fn handle_game_message(
+        games: &GamesDb,
+        id: &str,
+        data: IncomingGameMessage,
+        client: String,
+    ) {
         if let Some(lobby) = games.lock().await.get_mut(id) {
             match &lobby.server {
                 Some(game) => game.lock().await.handle_game_message(data),
@@ -190,11 +200,24 @@ impl GameLobby {
                     player.send_message(message)?;
                 }
             } else {
-                player.send_message(message)?;
+                if let OutgoingLobbyMessage::Update(gm) = message {
+                    player.send_message(&OutgoingLobbyMessage::ClientUpdate(
+                        (*gm).clone(),
+                        player.get_coins(),
+                    ))?;
+                } else {
+                    player.send_message(message)?;
+                }
             }
         }
 
         Ok(())
+    }
+
+    fn receive_coins(&mut self, amount: usize) {
+        for player in self.players.iter_mut() {
+            player.receive_coins(amount);
+        }
     }
 }
 

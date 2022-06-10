@@ -31,6 +31,8 @@ pub struct Game {
 
     #[serde(skip_serializing)]
     wave: Wave,
+
+    is_game_over: bool,
 }
 
 impl Game {
@@ -40,8 +42,9 @@ impl Game {
             time: 0.0,
             enemies: vec![],
             structures: vec![StructureType::LightningTowerV1.new(Vector2::new(100.0, 300.0))],
-            current_lives: map.get_max_lives() - 2,
+            current_lives: map.get_max_lives(),
             wave: Wave::new(300.0, 1500.0),
+            is_game_over: false,
         }
     }
 
@@ -50,7 +53,10 @@ impl Game {
         self.enemies.push(enemy);
     }
 
-    pub fn update(&mut self, delta_time: f64) {
+    pub fn update(&mut self, delta_time: f64) -> usize {
+        if self.is_game_over {
+            return 0;
+        }
         self.time += delta_time;
         for structure in &mut self.structures {
             structure.update(&mut self.enemies, self.time);
@@ -59,9 +65,10 @@ impl Game {
             let enemy = enemy.new(self.time);
             self.enemies.push(enemy);
         }
-        self.remove_dead_enemies();
+        let gold_earned = self.remove_dead_enemies();
         self.move_enemies();
         self.check_enemies_in_base();
+        gold_earned
     }
 
     pub fn get_map(&self) -> &Map {
@@ -111,8 +118,20 @@ impl Game {
         Err(GameError::new(String::from("Could not upgrade")))
     }
 
-    fn remove_dead_enemies(&mut self) {
-        self.enemies.retain(|enemy| enemy.get_health() > 0.0)
+    fn remove_dead_enemies(&mut self) -> usize {
+        let mut gold_earned: usize = 0;
+        self.enemies.retain(|enemy| {
+            return if enemy.get_health() > 0.0 {
+                true
+            } else {
+                let coins = enemy.get_enemy_type().get_enemy_data().get_coin_reward();
+                gold_earned += coins;
+
+                false
+            };
+        });
+
+        gold_earned
     }
 
     fn move_enemies(&mut self) {
@@ -129,6 +148,9 @@ impl Game {
             let is_inside = rect.is_inside(enemy.get_position());
             if is_inside {
                 self.current_lives -= 1;
+                if self.current_lives == 0 {
+                    self.is_game_over = true;
+                }
             }
 
             !is_inside

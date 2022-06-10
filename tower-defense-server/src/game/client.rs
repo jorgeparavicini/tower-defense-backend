@@ -21,6 +21,7 @@ pub struct Client {
     handle: JoinHandle<()>,
     is_host: bool,
     name: String,
+    coins: usize,
 }
 
 impl Client {
@@ -35,6 +36,7 @@ impl Client {
             handle,
             is_host,
             name,
+            coins: 0,
         }
     }
 
@@ -96,7 +98,7 @@ impl Client {
 
             if msg.is_text() {
                 if let Ok(result) = serde_json::from_str(msg.to_str().unwrap()) {
-                    let message = LobbyMessage::GameMessage(result);
+                    let message = LobbyMessage::GameMessage(result, client.clone());
                     Self::send(&tx, message, &client).await;
                 } else if let Ok(result) = serde_json::from_str(msg.to_str().unwrap()) {
                     let message = match result {
@@ -104,24 +106,7 @@ impl Client {
                         IncomingLobbyMessage::Ping(n) => LobbyMessage::Ping(client.clone(), n),
                     };
                     Self::send(&tx, message, &client).await;
-                }
-                /*if let Ok(mut result) = serde_json::from_str(msg.to_str().unwrap()) {
-                    if let IncomingGameMessage::Ping(ping) = result {
-                        let ping = Duration::from_millis(ping);
-                        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-                        let pong = if now > ping {
-                            now - ping
-                        } else {
-                            Duration::from_millis(0)
-                        }
-                        .as_millis() as u64;
-                        result = IncomingGameMessage::Ping(pong);
-                    }
-
-                    debug!("Received message {}", result.to_string());
-                    //tx.send(result);
-                }*/
-                else {
+                } else {
                     error!("Could not read message received: {}", msg.to_str().unwrap());
                 }
             } else {
@@ -136,6 +121,14 @@ impl Client {
 
     pub fn get_name(&self) -> &str {
         &self.name
+    }
+
+    pub fn get_coins(&self) -> usize {
+        self.coins
+    }
+
+    pub fn receive_coins(&mut self, amount: usize) {
+        self.coins += amount;
     }
 
     async fn send(tx: &Sender<LobbyMessage>, message: LobbyMessage, client: &str) {
