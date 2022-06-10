@@ -35,7 +35,8 @@ impl State {
 
     fn idle_update(self, enemies: &mut Vec<Enemy>, time: f64, tower: &LightningTower) -> Self {
         for enemy in enemies.iter() {
-            if (tower.get_position() - enemy.get_position()).magnitude() < tower.model.attack_range
+            if (&tower.get_offset_position() - enemy.get_position()).magnitude()
+                < tower.model.attack_range
             {
                 return State::Attack {
                     attack_start: time,
@@ -61,7 +62,7 @@ impl State {
 
         if !did_attack && (attack_start + tower.model.attack_damage_delay) < time {
             for enemy in enemies.iter_mut() {
-                let distance = (tower.get_position() - enemy.get_position()).magnitude();
+                let distance = (&tower.get_offset_position() - enemy.get_position()).magnitude();
                 if distance < tower.model.attack_range {
                     enemy.apply_damage(tower.model.attack_damage);
                 }
@@ -102,7 +103,9 @@ impl LightningTower {
     const MAX_HEALTH: f64 = 100.0;
     const IDLE_SPRITESHEET: &'static str = "structures/blitz_turm/blitz_turm_v2_idle.png";
     const ATTACK_SPRITESHEET: &'static str = "structures/blitz_turm/blitz_turm_v2.png";
-    const ATTACK_RANGE: f64 = 100.0;
+    const RADIUS: f64 = 20.0;
+    const Y_OFFSET: f64 = 50.0;
+    const ATTACK_RANGE: f64 = 50.0;
     const ATTACK_DAMAGE: f64 = 60.0;
     const ATTACK_COOLDOWN: f64 = 1000.0;
     const ATTACK_DAMAGE_DELAY: f64 = 650.0;
@@ -118,8 +121,17 @@ impl Structure for LightningTower {
         self.base.get_position()
     }
 
+    fn get_offset_position(&self) -> Vector2 {
+        let pos = self.base.get_position();
+        Vector2::new(pos.x(), pos.y() - LightningTower::Y_OFFSET)
+    }
+
     fn set_position(&mut self, pos: Vector2) {
         self.base.set_position(pos)
+    }
+
+    fn get_radius(&self) -> &f64 {
+        self.base.get_radius()
     }
 
     fn get_health(&self) -> f64 {
@@ -147,7 +159,7 @@ impl GameStructure for LightningTower {}
 
 impl StructureFactory for LightningTower {
     fn new(pos: Vector2) -> Self {
-        let base = StructureBase::new(LightningTower::MAX_HEALTH, pos);
+        let base = StructureBase::new(LightningTower::MAX_HEALTH, pos, LightningTower::RADIUS);
         LightningTower {
             base,
             model: &LIGHTNING_TOWER_MODEL,
@@ -182,6 +194,7 @@ pub struct LightningTowerModel {
     icon: String,
     attack_spritesheet: String,
     idle_spritesheet: String,
+    radius: f64,
     max_health: f64,
     attack_range: f64,
     attack_damage: f64,
@@ -221,6 +234,7 @@ lazy_static! {
             icon: String::from("structures/blitz_turm/blitz_turm_v2_icon.png"),
             attack_spritesheet: LightningTower::ATTACK_SPRITESHEET.to_string(),
             idle_spritesheet: LightningTower::IDLE_SPRITESHEET.to_string(),
+            radius: LightningTower::RADIUS,
             max_health: LightningTower::MAX_HEALTH,
             attack_range: LightningTower::ATTACK_RANGE,
             attack_damage: LightningTower::ATTACK_DAMAGE,

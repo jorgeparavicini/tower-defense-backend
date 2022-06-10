@@ -3,7 +3,6 @@ use crate::game::players::Players;
 use crate::game::server_message::{LobbyMessage, OutgoingLobbyMessage};
 use crate::game::{Client, IncomingGameMessage, OutgoingGameMessage};
 use crate::GamesDb;
-use futures::future::err;
 use log::{debug, error, info, warn};
 use std::error::Error;
 use std::sync::Arc;

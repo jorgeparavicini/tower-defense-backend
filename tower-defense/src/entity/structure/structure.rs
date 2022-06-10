@@ -29,7 +29,9 @@ serialize_trait_object!(GameStructure);
 pub trait Structure {
     fn get_id(&self) -> usize;
     fn get_position(&self) -> &Vector2;
+    fn get_offset_position(&self) -> Vector2;
     fn set_position(&mut self, pos: Vector2);
+    fn get_radius(&self) -> &f64;
 
     fn get_health(&self) -> f64;
     fn inflict_damage(&mut self, damage: f64);
@@ -45,14 +47,20 @@ pub struct StructureBase {
     id: usize,
     pos: Vector2,
     health: f64,
+    radius: f64,
 }
 
 impl StructureBase {
-    pub(crate) fn new(health: f64, pos: Vector2) -> Self {
+    pub(crate) fn new(health: f64, pos: Vector2, radius: f64) -> Self {
         static ID_COUNTER: AtomicUsize = AtomicUsize::new(0);
         let id = ID_COUNTER.fetch_add(1, Ordering::Relaxed);
 
-        StructureBase { id, pos, health }
+        StructureBase {
+            id,
+            pos,
+            health,
+            radius,
+        }
     }
 }
 
@@ -65,8 +73,16 @@ impl Structure for StructureBase {
         &self.pos
     }
 
+    fn get_offset_position(&self) -> Vector2 {
+        Vector2::new(0.0, 0.0)
+    }
+
     fn set_position(&mut self, pos: Vector2) {
         self.pos = pos;
+    }
+
+    fn get_radius(&self) -> &f64 {
+        &self.radius
     }
 
     fn get_health(&self) -> f64 {

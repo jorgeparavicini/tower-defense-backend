@@ -5,7 +5,15 @@ use crate::math::Vector2;
 use serde::Serialize;
 
 #[derive(Debug, Clone)]
-pub struct GameError;
+pub struct GameError {
+    message: String,
+}
+
+impl GameError {
+    pub fn new(message: String) -> Self {
+        Self { message }
+    }
+}
 
 #[derive(Serialize)]
 pub struct Game {
@@ -60,10 +68,18 @@ impl Game {
         structure: StructureType,
         pos: Vector2,
     ) -> Result<(), GameError> {
-        // TODO: Check if structure position is valid
-        let structure = structure.new(pos);
-        self.structures.push(structure);
+        let new_structure = structure.new(pos);
 
+        for structure in &self.structures {
+            let distance = (&structure.get_offset_position()
+                - &new_structure.get_offset_position())
+                .magnitude();
+            if distance < structure.get_radius() + new_structure.get_radius() {
+                return Err(GameError::new(String::from("Area obstructed")));
+            }
+        }
+
+        self.structures.push(new_structure);
         Ok(())
     }
 
