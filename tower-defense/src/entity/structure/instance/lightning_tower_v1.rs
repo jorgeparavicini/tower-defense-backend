@@ -79,10 +79,9 @@ impl State {
 
     fn cooldown_update(self, attack_end: f64, time: f64, tower: &LightningTowerV1) -> Self {
         if (attack_end + tower.model.attack_cooldown) < time {
-            return self;
+            return Self::Idle {};
         }
-
-        Self::Idle {}
+        self
     }
 }
 
