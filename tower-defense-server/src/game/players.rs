@@ -38,6 +38,16 @@ impl Players {
         self.clients.iter().find(|client| client.get_name() == name)
     }
 
+    pub fn find_client_mut(&mut self, name: &str) -> Option<&mut Client> {
+        if self.host.get_name() == name {
+            return Some(&mut self.host);
+        }
+
+        self.clients
+            .iter_mut()
+            .find(|client| client.get_name() == name)
+    }
+
     pub fn get_host(&self) -> &Client {
         &self.host
     }

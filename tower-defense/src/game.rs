@@ -2,7 +2,6 @@ use crate::entity::{Enemy, EnemyType, GameStructure, StructureType};
 use crate::map::Map;
 use crate::map::Wave;
 use crate::math::Vector2;
-use log::info;
 use serde::Serialize;
 
 #[derive(Debug, Clone)]
@@ -155,5 +154,9 @@ impl Game {
 
             !is_inside
         });
+    }
+
+    pub fn find_structure(&self, id: usize) -> Option<&Box<dyn GameStructure>> {
+        self.structures.iter().find(|x| x.get_id() == id)
     }
 }

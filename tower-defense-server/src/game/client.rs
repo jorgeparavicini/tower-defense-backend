@@ -36,7 +36,7 @@ impl Client {
             handle,
             is_host,
             name,
-            coins: 0,
+            coins: 500,
         }
     }
 
@@ -129,6 +129,10 @@ impl Client {
 
     pub fn receive_coins(&mut self, amount: usize) {
         self.coins += amount;
+    }
+
+    pub fn remove_coins(&mut self, amount: usize) {
+        self.coins -= amount;
     }
 
     async fn send(tx: &Sender<LobbyMessage>, message: LobbyMessage, client: &str) {

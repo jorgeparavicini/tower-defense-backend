@@ -1,4 +1,4 @@
-use crate::game::{IncomingGameMessage, OutgoingGameMessage};
+use crate::game::{Client, IncomingGameMessage, OutgoingGameMessage};
 use futures::{stream, StreamExt};
 use log::{debug, error, trace};
 use std::sync::Arc;
@@ -93,18 +93,31 @@ impl GameServer {
         Ok(())
     }
 
-    pub fn handle_game_message(&mut self, message: IncomingGameMessage) {
+    pub fn handle_game_message(&mut self, message: IncomingGameMessage, client: &mut Client) {
         match message {
             IncomingGameMessage::PlaceStructure { structure, pos } => {
                 let cost = structure.get_model().get_cost();
-
-                if let Err(_) = self.game.try_place_structure(structure, pos) {
-                    error!("Could not place structure");
+                let coin = client.get_coins();
+                if cost > coin {
+                    return;
+                }
+                if let Ok(_) = self.game.try_place_structure(structure, pos) {
+                    client.remove_coins(cost);
                 }
             }
             IncomingGameMessage::UpgradeStructure { id } => {
-                // TODO: Money
-                self.game.upgrade_structure(id);
+                if let Some(structure) = self.game.find_structure(id) {
+                    if let Some(upgrade) = structure.get_upgrade() {
+                        let cost = upgrade.get_model().get_cost();
+                        let coins = client.get_coins();
+                        if cost > coins {
+                            return;
+                        }
+                        if let Ok(_) = self.game.upgrade_structure(id) {
+                            client.remove_coins(cost);
+                        }
+                    }
+                }
             }
         }
     }

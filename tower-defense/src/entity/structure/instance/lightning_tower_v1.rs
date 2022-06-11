@@ -106,7 +106,7 @@ impl LightningTowerV1 {
     const RADIUS: f64 = 20.0;
     const Y_OFFSET: f64 = 50.0;
     const ATTACK_RANGE: f64 = 35.0;
-    const ATTACK_DAMAGE: f64 = 30.0;
+    const ATTACK_DAMAGE: f64 = 50.0;
     const ATTACK_COOLDOWN: f64 = 3000.0;
     const ATTACK_DAMAGE_DELAY: f64 = 650.0;
     const ATTACK_DURATION: f64 = 1000.0;

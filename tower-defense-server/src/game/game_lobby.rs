@@ -126,12 +126,14 @@ impl GameLobby {
         client: String,
     ) {
         if let Some(lobby) = games.lock().await.get_mut(id) {
-            match &lobby.server {
-                Some(game) => game.lock().await.handle_game_message(data),
-                None => warn!(
-                    "Game {} has not yet started and cannot receive game messages",
-                    id
-                ),
+            if let Some(player) = lobby.players.find_client_mut(&client) {
+                match &lobby.server {
+                    Some(game) => game.lock().await.handle_game_message(data, player),
+                    None => warn!(
+                        "Game {} has not yet started and cannot receive game messages",
+                        id
+                    ),
+                }
             }
         } else {
             error!("Lobby {} not found", id);
