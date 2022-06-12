@@ -9,8 +9,10 @@ use tower_defense::math::Vector2;
 #[serde(tag = "message", content = "data")]
 pub enum IncomingLobbyMessage {
     Start,
+    Load(String),
     Ping(u64),
     Chat(String),
+    Save,
 }
 
 impl fmt::Display for IncomingLobbyMessage {
@@ -23,8 +25,10 @@ impl fmt::Display for IncomingLobbyMessage {
 #[serde(tag = "message", content = "data")]
 pub enum LobbyMessage {
     Start(String),
+    Load { client: String, lobby_id: String },
     Ping(String, u64),
     Chat { client: String, message: String },
+    Save(String),
     GameMessage(IncomingGameMessage, String),
     Disconnect(String),
 }

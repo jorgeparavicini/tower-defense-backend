@@ -1,13 +1,15 @@
 use crate::game::{Client, IncomingGameMessage, OutgoingGameMessage};
 use futures::{stream, StreamExt};
 use log::{debug, error, trace};
+use serde::Serialize;
 use std::sync::Arc;
 use std::time::Instant;
 use tokio::sync::mpsc::Sender;
 use tokio::sync::Mutex;
 use tokio::time::{self, Duration, Interval};
+use tower_defense::entity::{GameStructure, LightningTower, LightningTowerV1};
 use tower_defense::map::Map;
-use tower_defense::Game;
+use tower_defense::{Game, GameLoad};
 
 const TICK_RATE: u64 = 30;
 
@@ -17,11 +19,21 @@ struct GameError;
 #[derive(Debug, Clone)]
 struct GameClosed;
 
+#[derive(Serialize)]
 pub struct GameServer {
+    #[serde(flatten)]
     game: Game,
+
+    #[serde(skip_serializing)]
     interval: Interval,
+
+    #[serde(skip_serializing)]
     last_instant: Instant,
+
+    #[serde(skip_serializing)]
     closed: bool,
+
+    #[serde(skip_serializing)]
     tx: Sender<OutgoingGameMessage>,
 }
 
@@ -29,6 +41,28 @@ impl GameServer {
     pub fn new(map: &'static Map, tx: Sender<OutgoingGameMessage>) -> Self {
         Self {
             game: Game::new(map),
+            interval: time::interval(Duration::from_millis(1000 / TICK_RATE)),
+            last_instant: Instant::now(),
+            closed: false,
+            tx,
+        }
+    }
+
+    pub fn load(map: &'static Map, tx: Sender<OutgoingGameMessage>, data: &str) -> Self {
+        let game: serde_json::Value = serde_json::from_str(data).unwrap();
+        let game_load: GameLoad = serde_json::from_value(game.clone()).unwrap();
+        let mut structures: Vec<Box<dyn GameStructure>> = vec![];
+        for structure in game["structures"].as_array().unwrap() {
+            let model = structure["model"].as_str().unwrap();
+            match model {
+                "LightningTower" => structures.push(Box::new(LightningTower::load(structure))),
+                "LightningTowerV1" => structures.push(Box::new(LightningTowerV1::load(structure))),
+                _ => panic!("Unknown model: {}", model),
+            };
+        }
+
+        Self {
+            game: Game::load(map, game_load, structures),
             interval: time::interval(Duration::from_millis(1000 / TICK_RATE)),
             last_instant: Instant::now(),
             closed: false,

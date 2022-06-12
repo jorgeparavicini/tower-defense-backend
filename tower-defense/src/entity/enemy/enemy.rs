@@ -3,10 +3,10 @@ use crate::entity::gif::GifFrames;
 use crate::map::Map;
 use crate::math::Vector2;
 use log::error;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-#[derive(Serialize, PartialEq)]
+#[derive(Serialize, PartialEq, Deserialize)]
 #[serde(tag = "type", content = "data")]
 enum State {
     Idle,
@@ -103,13 +103,12 @@ impl EnemyModel {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Enemy {
     id: usize,
     pos: Vector2,
     health: f64,
     enemy_type: EnemyType,
-    #[serde(skip_serializing)]
     spawn_time: f64,
     state: Option<State>,
 }

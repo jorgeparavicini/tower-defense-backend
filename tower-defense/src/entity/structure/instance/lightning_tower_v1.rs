@@ -5,7 +5,8 @@ use crate::entity::structure::structure::{
 };
 use crate::entity::{Enemy, GameStructure, Structure, StructureType};
 use crate::math::Vector2;
-use serde::{Serialize, Serializer};
+use serde::{Deserialize, Serialize, Serializer};
+use serde_json::Value;
 use std::fs::File;
 use std::io::BufReader;
 
@@ -13,7 +14,7 @@ use std::io::BufReader;
 * States
 *****************************************/
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(tag = "type", content = "data")]
 enum State {
     Idle,
@@ -109,6 +110,16 @@ impl LightningTowerV1 {
     const ATTACK_COOLDOWN: f64 = 3000.0;
     const ATTACK_DAMAGE_DELAY: f64 = 650.0;
     const ATTACK_DURATION: f64 = 1000.0;
+
+    pub fn load(value: &Value) -> Self {
+        let base: StructureBase = serde_json::from_value(value.clone()).unwrap();
+        let state: State = serde_json::from_value(value["state"].clone()).unwrap();
+        Self {
+            base,
+            model: &LIGHTNING_TOWER_V1_MODEL,
+            state: Some(state),
+        }
+    }
 }
 
 impl Structure for LightningTowerV1 {

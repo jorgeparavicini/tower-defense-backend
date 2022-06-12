@@ -1,4 +1,7 @@
+extern crate core;
+
 use crate::game::GameLobby;
+use futures::TryFutureExt;
 use handler::LobbyNotFoundError;
 use log::trace;
 use std::collections::HashMap;
@@ -14,12 +17,14 @@ mod handler;
 mod server;
 
 pub type GamesDb = Arc<Mutex<HashMap<String, GameLobby>>>;
+pub type SavedGamesDb = Arc<Mutex<HashMap<String, String>>>;
 
 #[tokio::main]
 pub async fn main() {
     pretty_env_logger::init();
 
     let games = Arc::new(Mutex::new(HashMap::new()));
+    let saved_games = Arc::new(Mutex::new(HashMap::new()));
 
     trace!("Initializing routes");
 
@@ -29,6 +34,7 @@ pub async fn main() {
         .and(warp::path("create"))
         .and(warp::ws())
         .and(with_games_db(games.clone()))
+        .and(with_saved_games_db(saved_games.clone()))
         .and_then(handler::create_game);
 
     let join_game = warp::path("game")
@@ -51,12 +57,17 @@ pub async fn main() {
 
     let enemy_data = warp::path("enemies").map(|| warp::reply::json(&*ENEMY_MODEL_MAP));
 
+    let saved_games = warp::path("games")
+        .and(with_saved_games_db(saved_games.clone()))
+        .and_then(handler::get_saved_games);
+
     let routes = health_route
         .or(game_ws)
         .or(join_game)
         .or(resources)
         .or(structure_data)
         .or(enemy_data)
+        .or(saved_games)
         .with(warp::cors().allow_any_origin());
 
     warp::serve(routes).run(([127, 0, 0, 1], 6767)).await;
@@ -66,4 +77,10 @@ fn with_games_db(
     games_db: GamesDb,
 ) -> impl Filter<Extract = (GamesDb,), Error = Infallible> + Clone {
     warp::any().map(move || games_db.clone())
+}
+
+fn with_saved_games_db(
+    saved_games: SavedGamesDb,
+) -> impl Filter<Extract = (SavedGamesDb,), Error = Infallible> + Clone {
+    warp::any().map(move || saved_games.clone())
 }

@@ -1,11 +1,11 @@
-use crate::{GameLobby, GamesDb};
+use crate::{GameLobby, GamesDb, SavedGamesDb};
 use rand::distributions::Alphanumeric;
 use rand::Rng;
 use warp::ws::WebSocket;
 
 const KEY_LENGTH: usize = 8;
 
-pub async fn game_connection(ws: WebSocket, games: GamesDb) {
+pub async fn game_connection(ws: WebSocket, games: GamesDb, saved_games: SavedGamesDb) {
     let id = loop {
         let id = generate_lobby_key();
 
@@ -14,7 +14,7 @@ pub async fn game_connection(ws: WebSocket, games: GamesDb) {
         }
     };
 
-    let lobby = GameLobby::new(id, ws, games.clone());
+    let lobby = GameLobby::new(id, ws, games.clone(), saved_games.clone());
     games
         .lock()
         .await

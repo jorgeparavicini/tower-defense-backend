@@ -108,6 +108,11 @@ impl Client {
                             client: client.clone(),
                             message,
                         },
+                        IncomingLobbyMessage::Save => LobbyMessage::Save(client.clone()),
+                        IncomingLobbyMessage::Load(id) => LobbyMessage::Load {
+                            client: client.clone(),
+                            lobby_id: id,
+                        },
                     };
                     Self::send(&tx, message, &client).await;
                 } else {

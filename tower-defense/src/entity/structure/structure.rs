@@ -4,6 +4,7 @@ use crate::entity::structure::LightningTowerV1;
 use crate::entity::Enemy;
 use crate::math::Vector2;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::collections::HashMap;
 use std::fmt;
 use std::fmt::Formatter;
@@ -45,7 +46,7 @@ pub trait Structure {
 * Structure Base
 *****************************************/
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct StructureBase {
     id: usize,
     pos: Vector2,

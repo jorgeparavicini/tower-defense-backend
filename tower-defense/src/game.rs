@@ -1,8 +1,8 @@
-use crate::entity::{Enemy, EnemyType, GameStructure, StructureType};
+use crate::entity::{Enemy, GameStructure, StructureType};
 use crate::map::Map;
 use crate::map::Wave;
 use crate::math::Vector2;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone)]
 pub struct GameError {
@@ -17,6 +17,14 @@ impl GameError {
     pub fn message(&self) -> &str {
         &self.message
     }
+}
+
+#[derive(Deserialize)]
+pub struct GameLoad {
+    time: f64,
+    enemies: Vec<Enemy>,
+    current_lives: u64,
+    is_game_over: bool,
 }
 
 #[derive(Serialize)]
@@ -40,10 +48,26 @@ impl Game {
             map,
             time: 0.0,
             enemies: vec![],
-            structures: vec![StructureType::LightningTowerV1.new(Vector2::new(100.0, 300.0))],
+            structures: vec![],
             current_lives: map.get_max_lives(),
             wave: Wave::new(300.0, 1500.0),
             is_game_over: false,
+        }
+    }
+
+    pub fn load(
+        map: &'static Map,
+        game: GameLoad,
+        structures: Vec<Box<dyn GameStructure>>,
+    ) -> Self {
+        Self {
+            map,
+            time: game.time,
+            enemies: game.enemies,
+            structures,
+            current_lives: game.current_lives,
+            wave: Wave::new(300.0, 1500.0),
+            is_game_over: game.is_game_over,
         }
     }
 

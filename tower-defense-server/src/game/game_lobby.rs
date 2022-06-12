@@ -2,8 +2,11 @@ use crate::game::game_server::GameServer;
 use crate::game::players::Players;
 use crate::game::server_message::{LobbyMessage, OutgoingLobbyMessage};
 use crate::game::{Client, IncomingGameMessage, OutgoingGameMessage};
-use crate::GamesDb;
+use crate::{GamesDb, SavedGamesDb};
+use futures::future::err;
 use log::{debug, error, info, warn};
+use rand::distributions::Alphanumeric;
+use rand::Rng;
 use serde::Serialize;
 use std::error::Error;
 use std::sync::Arc;
@@ -11,7 +14,10 @@ use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::{mpsc, Mutex};
 use tokio::task::JoinHandle;
 use tower_defense::map::levels::MAP_LEVEL_1;
+use tower_defense::GameLoad;
 use warp::ws::WebSocket;
+
+const KEY_LENGTH: usize = 8;
 
 #[derive(Serialize)]
 pub struct ChatMessage {
@@ -27,10 +33,11 @@ pub struct GameLobby {
     tx: Sender<LobbyMessage>,
     handle: JoinHandle<()>,
     game_handle: Option<JoinHandle<()>>,
+    saved_games: SavedGamesDb,
 }
 
 impl GameLobby {
-    pub fn new(id: String, ws: WebSocket, games: GamesDb) -> Self {
+    pub fn new(id: String, ws: WebSocket, games: GamesDb, saved_games: SavedGamesDb) -> Self {
         // Channel for clients to communicate to lobby.
         let (tx, rx) = mpsc::channel(32);
         let host = Client::new_host(ws, tx.clone());
@@ -47,6 +54,7 @@ impl GameLobby {
             tx,
             handle,
             game_handle: None,
+            saved_games,
         }
     }
 
@@ -71,6 +79,9 @@ impl GameLobby {
             debug!("Received message: {}", &result);
             match result {
                 LobbyMessage::Start(name) => Self::start_game(&games, &id, name).await,
+                LobbyMessage::Load { client, lobby_id } => {
+                    Self::load_game(&games, &id, client, lobby_id).await
+                }
                 LobbyMessage::Ping(name, n) => Self::handle_ping(&games, &id, name, n).await,
                 LobbyMessage::Chat { client, message } => {
                     Self::handle_chat_message(&games, &id, client, message).await
@@ -79,6 +90,7 @@ impl GameLobby {
                     Self::handle_game_message(&games, &id, data, client).await
                 }
                 LobbyMessage::Disconnect(name) => Self::handle_disconnect(&games, &id, name).await,
+                LobbyMessage::Save(_) => Self::handle_save(&games, &id).await,
             }
         }
     }
@@ -98,8 +110,8 @@ impl GameLobby {
     }
 
     async fn start_game(games: &GamesDb, id: &str, name: String) {
-        if let Some(game) = games.lock().await.get_mut(id) {
-            if game.players.get_host().get_name() != name {
+        if let Some(lobby) = games.lock().await.get_mut(id) {
+            if lobby.players.get_host().get_name() != name {
                 info!("Only the host can start the game");
                 return;
             } else {
@@ -111,9 +123,34 @@ impl GameLobby {
                     String::from(id),
                     rx,
                 ));
-                game.game_handle = Some(handle);
+                lobby.game_handle = Some(handle);
                 GameServer::start(game_server.clone());
-                game.server = Some(game_server);
+                lobby.server = Some(game_server);
+            }
+        }
+    }
+
+    async fn load_game(games: &GamesDb, id: &str, name: String, lobby_id: String) {
+        if let Some(lobby) = games.lock().await.get_mut(id) {
+            if lobby.players.get_host().get_name() != name {
+                info!("Only the host can start the game");
+                return;
+            } else {
+                if let Some(saved_game) = lobby.saved_games.lock().await.get(&lobby_id) {
+                    let (tx, rx) = mpsc::channel(32);
+                    let game_server = GameServer::load(&MAP_LEVEL_1, tx, saved_game);
+                    let game_server = Arc::new(Mutex::new(game_server));
+                    let handle = tokio::spawn(GameLobby::handle_game_events(
+                        games.clone(),
+                        String::from(id),
+                        rx,
+                    ));
+                    lobby.game_handle = Some(handle);
+                    GameServer::start(game_server.clone());
+                    lobby.server = Some(game_server);
+                } else {
+                    info!("Lobby not found");
+                }
             }
         }
     }
@@ -204,6 +241,26 @@ impl GameLobby {
         }
     }
 
+    async fn handle_save(games: &GamesDb, id: &str) {
+        if let Some(lobby) = games.lock().await.get_mut(id) {
+            if let Some(server) = &lobby.server {
+                match serde_json::to_string(&*server.lock().await) {
+                    Ok(game) => {
+                        let id = loop {
+                            let id = generate_lobby_key();
+
+                            if !lobby.saved_games.lock().await.contains_key(&id) {
+                                break id;
+                            }
+                        };
+                        lobby.saved_games.lock().await.insert(id, game);
+                    }
+                    Err(error) => error!("{}", error),
+                }
+            }
+        }
+    }
+
     fn broadcast_players(&self) {
         info!("Broadcasting players");
         let players = (&self.players)
@@ -262,4 +319,12 @@ impl<'a> Drop for GameLobby {
         }
         debug!("Aborting lobby listener");
     }
+}
+
+fn generate_lobby_key() -> String {
+    rand::thread_rng()
+        .sample_iter(&Alphanumeric)
+        .take(KEY_LENGTH)
+        .map(char::from)
+        .collect()
 }
