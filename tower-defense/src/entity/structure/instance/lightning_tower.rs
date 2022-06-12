@@ -103,13 +103,13 @@ impl LightningTower {
     const MAX_HEALTH: f64 = 100.0;
     const IDLE_SPRITESHEET: &'static str = "structures/blitz_turm/blitz_turm_v2_idle.png";
     const ATTACK_SPRITESHEET: &'static str = "structures/blitz_turm/blitz_turm_v2.png";
-    const RADIUS: f64 = 20.0;
+    const RADIUS: f64 = 50.0;
     const Y_OFFSET: f64 = 50.0;
-    const ATTACK_RANGE: f64 = 50.0;
+    const ATTACK_RANGE: f64 = 100.0;
     const ATTACK_DAMAGE: f64 = 60.0;
     const ATTACK_COOLDOWN: f64 = 1000.0;
-    const ATTACK_DAMAGE_DELAY: f64 = 650.0;
-    const ATTACK_DURATION: f64 = 1000.0;
+    const ATTACK_DAMAGE_DELAY: f64 = 500.0;
+    const ATTACK_DURATION: f64 = 700.0;
 
     pub fn load(value: &Value) -> Self {
         let base: StructureBase = serde_json::from_value(value.clone()).unwrap();

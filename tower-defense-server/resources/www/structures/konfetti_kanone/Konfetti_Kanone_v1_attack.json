@@ -1,0 +1,81 @@
+{
+  "frames": [
+    {
+      "frame": { "x": 0, "y": 0, "w": 160, "h": 160 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 160, "h": 160 },
+      "sourceSize": { "w": 160, "h": 160 }
+    },
+    {
+      "frame": { "x": 160, "y": 0, "w": 160, "h": 160 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 160, "h": 160 },
+      "sourceSize": { "w": 160, "h": 160 }
+    },
+    {
+      "frame": { "x": 320, "y": 0, "w": 160, "h": 160 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 160, "h": 160 },
+      "sourceSize": { "w": 160, "h": 160 }
+    },
+    {
+      "frame": { "x": 0, "y": 160, "w": 160, "h": 160 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 160, "h": 160 },
+      "sourceSize": { "w": 160, "h": 160 }
+    },
+    {
+      "frame": { "x": 160, "y": 160, "w": 160, "h": 160 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 160, "h": 160 },
+      "sourceSize": { "w": 160, "h": 160 }
+    },
+    {
+      "frame": { "x": 320, "y": 160, "w": 160, "h": 160 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 160, "h": 160 },
+      "sourceSize": { "w": 160, "h": 160 }
+    },
+    {
+      "frame": { "x": 0, "y": 320, "w": 160, "h": 160 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 160, "h": 160 },
+      "sourceSize": { "w": 160, "h": 160 }
+    },
+    {
+      "frame": { "x": 160, "y": 320, "w": 160, "h": 160 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 160, "h": 160 },
+      "sourceSize": { "w": 160, "h": 160 }
+    },
+    {
+      "frame": { "x": 320, "y": 320, "w": 160, "h": 160 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 160, "h": 160 },
+      "sourceSize": { "w": 160, "h": 160 }
+    },
+    {
+      "frame": { "x": 0, "y": 480, "w": 160, "h": 160 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 160, "h": 160 },
+      "sourceSize": { "w": 160, "h": 160 }
+    }
+  ],
+  "meta": {
+    "app": "https://github.com/piskelapp/piskel/",
+    "version": "1.0",
+    "image": "Konfetti_Kanone.png",
+    "format": "RGBA8888",
+    "size": { "w": 480, "h": 640 }
+  }
+}

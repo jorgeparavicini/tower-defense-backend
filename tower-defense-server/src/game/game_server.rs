@@ -7,7 +7,9 @@ use std::time::Instant;
 use tokio::sync::mpsc::Sender;
 use tokio::sync::Mutex;
 use tokio::time::{self, Duration, Interval};
-use tower_defense::entity::{GameStructure, LightningTower, LightningTowerV1};
+use tower_defense::entity::{
+    GameStructure, KonfettiKanoneV1, KonfettiKanoneV2, LightningTower, LightningTowerV1,
+};
 use tower_defense::map::Map;
 use tower_defense::{Game, GameLoad};
 
@@ -57,6 +59,8 @@ impl GameServer {
             match model {
                 "LightningTower" => structures.push(Box::new(LightningTower::load(structure))),
                 "LightningTowerV1" => structures.push(Box::new(LightningTowerV1::load(structure))),
+                "KonfettiKanoneV1" => structures.push(Box::new(KonfettiKanoneV1::load(structure))),
+                "KonfettiKanoneV2" => structures.push(Box::new(KonfettiKanoneV2::load(structure))),
                 _ => panic!("Unknown model: {}", model),
             };
         }

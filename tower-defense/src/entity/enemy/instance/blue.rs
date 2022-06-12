@@ -3,9 +3,9 @@ use crate::entity::enemy::enemy_type::EnemyModelMap;
 use std::fs::File;
 use std::io::BufReader;
 
-const MAX_HEALTH: f64 = 100.0;
+const MAX_HEALTH: f64 = 80.0;
 const DAMAGE: u64 = 1;
-const MOVE_SPEED: f64 = 30.0;
+const MOVE_SPEED: f64 = 100.0;
 const REWARD: usize = 100;
 
 pub fn register_blue_model(model_map: &mut EnemyModelMap) {

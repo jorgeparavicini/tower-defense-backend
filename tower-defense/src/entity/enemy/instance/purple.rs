@@ -5,7 +5,7 @@ use std::io::BufReader;
 
 const MAX_HEALTH: f64 = 150.0;
 const DAMAGE: u64 = 2;
-const MOVE_SPEED: f64 = 20.0;
+const MOVE_SPEED: f64 = 80.0;
 const REWARD: usize = 120;
 
 pub fn register_purple_model(model_map: &mut EnemyModelMap) {

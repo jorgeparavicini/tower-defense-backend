@@ -23,7 +23,7 @@ enum State {
 }
 
 impl State {
-    fn update(self, enemies: &mut Vec<Enemy>, time: f64, tower: &LightningTowerV1) -> Self {
+    fn update(self, enemies: &mut Vec<Enemy>, time: f64, tower: &KonfettiKanoneV1) -> Self {
         match self {
             Self::Idle => self.idle_update(enemies, time, tower),
             Self::Attack {
@@ -34,7 +34,7 @@ impl State {
         }
     }
 
-    fn idle_update(self, enemies: &mut Vec<Enemy>, time: f64, tower: &LightningTowerV1) -> Self {
+    fn idle_update(self, enemies: &mut Vec<Enemy>, time: f64, tower: &KonfettiKanoneV1) -> Self {
         for enemy in enemies.iter() {
             if (&tower.get_offset_position() - enemy.get_position()).magnitude()
                 < tower.model.attack_range
@@ -55,7 +55,7 @@ impl State {
         did_attack: bool,
         enemies: &mut Vec<Enemy>,
         time: f64,
-        tower: &LightningTowerV1,
+        tower: &KonfettiKanoneV1,
     ) -> Self {
         if (attack_start + tower.model.attack_duration) < time {
             return Self::Cooldown { attack_end: time };
@@ -78,7 +78,7 @@ impl State {
         self
     }
 
-    fn cooldown_update(self, attack_end: f64, time: f64, tower: &LightningTowerV1) -> Self {
+    fn cooldown_update(self, attack_end: f64, time: f64, tower: &KonfettiKanoneV1) -> Self {
         if (attack_end + tower.model.attack_cooldown) < time {
             return Self::Idle {};
         }
@@ -87,42 +87,43 @@ impl State {
 }
 
 /****************************************
-* Lightning Tower v1
+* Konfetti Kanone
 *****************************************/
 
 #[derive(Serialize)]
-pub struct LightningTowerV1 {
+pub struct KonfettiKanoneV1 {
     #[serde(flatten)]
     base: StructureBase,
     #[serde(serialize_with = "model_serialize")]
-    model: &'static LightningTowerV1Model,
+    model: &'static KonfettiKanoneModel,
     state: Option<State>,
 }
 
-impl LightningTowerV1 {
+impl KonfettiKanoneV1 {
     const MAX_HEALTH: f64 = 100.0;
-    const IDLE_SPRITESHEET: &'static str = "structures/blitz_turm/blitz_turm_v1.png";
-    const ATTACK_SPRITESHEET: &'static str = "structures/blitz_turm/blitz_turm_v1_attack.png";
+    const IDLE_SPRITESHEET: &'static str = "structures/konfetti_kanone/konfetti_kanone_v1_idle.png";
+    const ATTACK_SPRITESHEET: &'static str =
+        "structures/konfetti_kanone/konfetti_kanone_v1_attack.png";
     const RADIUS: f64 = 50.0;
     const Y_OFFSET: f64 = 50.0;
-    const ATTACK_RANGE: f64 = 100.0;
-    const ATTACK_DAMAGE: f64 = 50.0;
-    const ATTACK_COOLDOWN: f64 = 2000.0;
-    const ATTACK_DAMAGE_DELAY: f64 = 300.0;
-    const ATTACK_DURATION: f64 = 500.0;
+    const ATTACK_RANGE: f64 = 120.0;
+    const ATTACK_DAMAGE: f64 = 80.0;
+    const ATTACK_COOLDOWN: f64 = 5000.0;
+    const ATTACK_DAMAGE_DELAY: f64 = 650.0;
+    const ATTACK_DURATION: f64 = 1000.0;
 
     pub fn load(value: &Value) -> Self {
         let base: StructureBase = serde_json::from_value(value.clone()).unwrap();
         let state: State = serde_json::from_value(value["state"].clone()).unwrap();
         Self {
             base,
-            model: &LIGHTNING_TOWER_V1_MODEL,
+            model: &KONFETTI_KANONE_MODEL,
             state: Some(state),
         }
     }
 }
 
-impl Structure for LightningTowerV1 {
+impl Structure for KonfettiKanoneV1 {
     fn get_id(&self) -> usize {
         self.base.get_id()
     }
@@ -133,7 +134,7 @@ impl Structure for LightningTowerV1 {
 
     fn get_offset_position(&self) -> Vector2 {
         let pos = self.base.get_position();
-        Vector2::new(pos.x(), pos.y() - LightningTowerV1::Y_OFFSET)
+        Vector2::new(pos.x(), pos.y() - KonfettiKanoneV1::Y_OFFSET)
     }
 
     fn set_position(&mut self, pos: Vector2) {
@@ -145,7 +146,7 @@ impl Structure for LightningTowerV1 {
     }
 
     fn get_upgrade(&self) -> Option<StructureType> {
-        Some(StructureType::LightningTower)
+        Some(StructureType::KonfettiKanoneV2)
     }
 
     fn get_health(&self) -> f64 {
@@ -161,7 +162,7 @@ impl Structure for LightningTowerV1 {
     }
 }
 
-impl StructureUpdate for LightningTowerV1 {
+impl StructureUpdate for KonfettiKanoneV1 {
     fn update(&mut self, enemies: &mut Vec<Enemy>, time: f64) {
         if let Some(s) = self.state.take() {
             self.state = Some(s.update(enemies, time, self));
@@ -169,40 +170,40 @@ impl StructureUpdate for LightningTowerV1 {
     }
 }
 
-impl GameStructure for LightningTowerV1 {}
+impl GameStructure for KonfettiKanoneV1 {}
 
-impl StructureFactory for LightningTowerV1 {
+impl StructureFactory for KonfettiKanoneV1 {
     fn new(pos: Vector2) -> Self {
-        let base = StructureBase::new(LightningTowerV1::MAX_HEALTH, pos, LightningTowerV1::RADIUS);
-        LightningTowerV1 {
+        let base = StructureBase::new(KonfettiKanoneV1::MAX_HEALTH, pos, KonfettiKanoneV1::RADIUS);
+        KonfettiKanoneV1 {
             base,
-            model: &LIGHTNING_TOWER_V1_MODEL,
+            model: &KONFETTI_KANONE_MODEL,
             state: Some(State::Idle),
         }
     }
 }
 
-impl RegisterStructureModel for LightningTowerV1 {
+impl RegisterStructureModel for KonfettiKanoneV1 {
     fn register_model(model_map: &mut StructureModelMap) {
         model_map.insert(
-            String::from("LightningTowerV1"),
-            Box::new((*LIGHTNING_TOWER_V1_MODEL).clone()) as Box<dyn StructureModel + 'static>,
+            String::from("KonfettiKanoneV1"),
+            Box::new((*KONFETTI_KANONE_MODEL).clone()) as Box<dyn StructureModel + 'static>,
         );
     }
 }
 
-fn model_serialize<S>(_x: &LightningTowerV1Model, s: S) -> Result<S::Ok, S::Error>
+fn model_serialize<S>(_x: &KonfettiKanoneModel, s: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
 {
-    s.serialize_str("LightningTowerV1")
+    s.serialize_str("KonfettiKanoneV1")
 }
 
 /****************************************
-* Lightning Tower V1 Model
+* Lightning Tower Model
 *****************************************/
 #[derive(Serialize, Clone)]
-pub struct LightningTowerV1Model {
+pub struct KonfettiKanoneModel {
     attack_frames: GifFrames,
     idle_frames: GifFrames,
     icon: String,
@@ -222,7 +223,7 @@ pub struct LightningTowerV1Model {
     cost: usize,
 }
 
-impl StructureModel for LightningTowerV1Model {
+impl StructureModel for KonfettiKanoneModel {
     fn get_cost(&self) -> usize {
         self.cost
     }
@@ -233,42 +234,42 @@ impl StructureModel for LightningTowerV1Model {
 *****************************************/
 
 lazy_static! {
-    pub static ref LIGHTNING_TOWER_V1_MODEL: LightningTowerV1Model = {
-        let file = File::open("resources/www/structures/blitz_turm/blitz_turm_v1_attack.json")
-            .expect("Could not find json file for Blitz Turm V1");
+    pub static ref KONFETTI_KANONE_MODEL: KonfettiKanoneModel = {
+        let file = File::open("resources/www/structures/konfetti_kanone/konfetti_kanone_v1_attack.json")
+            .expect("Could not find json file for Konfetti Kanone V1");
         let reader = BufReader::new(file);
         let attack_frames = serde_json::from_reader(reader)
-            .expect("Could not parse gif frames for Lightning tower v1 attack animation");
+            .expect("Could not parse gif frames for Konfetti Kanone V1 attack animation");
 
-        let file = File::open("resources/www/structures/blitz_turm/blitz_turm_v1.json")
-            .expect("Could not find json file for Blitz Turm V1");
+        let file = File::open("resources/www/structures/konfetti_kanone/konfetti_kanone_v1_idle.json")
+            .expect("Could not find json file for Konfetti Kanone V1");
         let reader = BufReader::new(file);
         let idle_frames = serde_json::from_reader(reader)
-            .expect("Could not parse gif frames for Lightning tower v1 idle animation");
+            .expect("Could not parse gif frames for Konfetti Kanone V1 idle animation");
 
         // The attack damage delay is the time it takes from the animation start until the damage
         // is applied. If it were longer than the entire attack duration the damage would
         // never get applied.
-        debug_assert!(LightningTowerV1::ATTACK_DAMAGE_DELAY < LightningTowerV1::ATTACK_DURATION);
+        debug_assert!(KonfettiKanoneV1::ATTACK_DAMAGE_DELAY < KonfettiKanoneV1::ATTACK_DURATION);
 
-        LightningTowerV1Model {
+        KonfettiKanoneModel {
             attack_frames,
             idle_frames,
-            icon: String::from("structures/blitz_turm/blitz_turm_v1_icon.png"),
-            attack_spritesheet: LightningTowerV1::ATTACK_SPRITESHEET.to_string(),
-            idle_spritesheet: LightningTowerV1::IDLE_SPRITESHEET.to_string(),
-            radius: LightningTowerV1::RADIUS,
-            max_health: LightningTowerV1::MAX_HEALTH,
-            attack_range: LightningTowerV1::ATTACK_RANGE,
-            attack_damage: LightningTowerV1::ATTACK_DAMAGE,
-            attack_cooldown: LightningTowerV1::ATTACK_COOLDOWN,
-            attack_damage_delay: LightningTowerV1::ATTACK_DAMAGE_DELAY,
-            attack_duration: LightningTowerV1::ATTACK_DURATION,
+            icon: String::from("structures/konfetti_kanone/konfetti_kanone_v1_icon.png"),
+            attack_spritesheet: KonfettiKanoneV1::ATTACK_SPRITESHEET.to_string(),
+            idle_spritesheet: KonfettiKanoneV1::IDLE_SPRITESHEET.to_string(),
+            radius: KonfettiKanoneV1::RADIUS,
+            max_health: KonfettiKanoneV1::MAX_HEALTH,
+            attack_range: KonfettiKanoneV1::ATTACK_RANGE,
+            attack_damage: KonfettiKanoneV1::ATTACK_DAMAGE,
+            attack_cooldown: KonfettiKanoneV1::ATTACK_COOLDOWN,
+            attack_damage_delay: KonfettiKanoneV1::ATTACK_DAMAGE_DELAY,
+            attack_duration: KonfettiKanoneV1::ATTACK_DURATION,
             can_be_bought: true,
             can_be_upgraded: true,
-            name: String::from("Lightning Tower"),
-            level: 1,
-            cost: 150
+            name: String::from("Konfetti Kanone"),
+            level: 2,
+            cost: 300
         }
     };
 }
