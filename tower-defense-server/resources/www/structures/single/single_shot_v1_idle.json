@@ -1,0 +1,18 @@
+{
+  "frames": [
+    {
+      "frame": { "x": 0, "y": 0, "w": 200, "h": 200 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 200, "h": 200 },
+      "sourceSize": { "w": 200, "h": 200 }
+    }
+  ],
+  "meta": {
+    "app": "https://github.com/piskelapp/piskel/",
+    "version": "1.0",
+    "image": "Singel_shot_v1.png",
+    "format": "RGBA8888",
+    "size": { "w": 200, "h": 200 }
+  }
+}

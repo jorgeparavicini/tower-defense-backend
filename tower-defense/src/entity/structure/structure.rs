@@ -2,7 +2,8 @@ use crate::entity::structure::instance::{LIGHTNING_TOWER_MODEL, LIGHTNING_TOWER_
 use crate::entity::structure::LightningTower;
 use crate::entity::structure::LightningTowerV1;
 use crate::entity::{
-    Enemy, KonfettiKanoneV1, KonfettiKanoneV2, KONFETTI_KANONE_MODEL, KONFETTI_KANONE_MODEL_V2,
+    Enemy, KonfettiKanoneV1, KonfettiKanoneV2, SingleShotTowerV1, KONFETTI_KANONE_MODEL,
+    KONFETTI_KANONE_MODEL_V2, SINGLE_SHOT_TOWER_V1_MODEL,
 };
 use crate::math::Vector2;
 use serde::{Deserialize, Serialize};
@@ -135,6 +136,7 @@ pub enum StructureType {
     LightningTower,
     KonfettiKanoneV1,
     KonfettiKanoneV2,
+    SingleShotTowerV1,
 }
 
 impl StructureType {
@@ -144,6 +146,7 @@ impl StructureType {
             StructureType::LightningTower => Box::new(LightningTower::new(pos)),
             StructureType::KonfettiKanoneV1 => Box::new(KonfettiKanoneV1::new(pos)),
             StructureType::KonfettiKanoneV2 => Box::new(KonfettiKanoneV2::new(pos)),
+            StructureType::SingleShotTowerV1 => Box::new(SingleShotTowerV1::new(pos)),
         }
     }
 
@@ -153,6 +156,7 @@ impl StructureType {
             StructureType::LightningTower => LightningTower::register_model(model_map),
             StructureType::KonfettiKanoneV1 => KonfettiKanoneV1::register_model(model_map),
             StructureType::KonfettiKanoneV2 => KonfettiKanoneV2::register_model(model_map),
+            StructureType::SingleShotTowerV1 => SingleShotTowerV1::register_model(model_map),
         }
     }
 
@@ -162,6 +166,7 @@ impl StructureType {
             StructureType::LightningTower => Box::new(&*LIGHTNING_TOWER_MODEL),
             StructureType::KonfettiKanoneV1 => Box::new(&*KONFETTI_KANONE_MODEL),
             StructureType::KonfettiKanoneV2 => Box::new(&*KONFETTI_KANONE_MODEL_V2),
+            StructureType::SingleShotTowerV1 => Box::new(&*SINGLE_SHOT_TOWER_V1_MODEL),
         }
     }
 }
