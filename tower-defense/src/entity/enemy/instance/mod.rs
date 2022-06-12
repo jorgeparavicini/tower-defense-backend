@@ -1,3 +1,3 @@
-mod recruit;
+mod blue;
 
-pub(super) use recruit::RECRUIT;
+pub(super) use blue::{register_blue_model, BLUE_MODEL};

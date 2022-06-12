@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::convert::Infallible;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use tower_defense::entity::STRUCTURE_MODEL_MAP;
+use tower_defense::entity::{ENEMY_MODEL_MAP, STRUCTURE_MODEL_MAP};
 use warp::http::StatusCode;
 use warp::{Filter, Rejection};
 
@@ -49,11 +49,14 @@ pub async fn main() {
 
     let structure_data = warp::path("structures").map(|| warp::reply::json(&*STRUCTURE_MODEL_MAP));
 
+    let enemy_data = warp::path("enemies").map(|| warp::reply::json(&*ENEMY_MODEL_MAP));
+
     let routes = health_route
         .or(game_ws)
         .or(join_game)
         .or(resources)
         .or(structure_data)
+        .or(enemy_data)
         .with(warp::cors().allow_any_origin());
 
     warp::serve(routes).run(([127, 0, 0, 1], 6767)).await;

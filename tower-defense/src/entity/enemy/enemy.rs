@@ -1,13 +1,106 @@
 use crate::entity::enemy::enemy_type::EnemyType;
+use crate::entity::gif::GifFrames;
+use crate::map::Map;
 use crate::math::Vector2;
+use log::error;
 use serde::Serialize;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-pub trait EnemyData {
-    fn get_max_health(&self) -> f64;
-    fn get_damage(&self) -> u64;
-    fn get_move_speed(&self) -> f64;
-    fn get_coin_reward(&self) -> usize;
+#[derive(Serialize, PartialEq)]
+#[serde(tag = "type", content = "data")]
+enum State {
+    Idle,
+    Dying { time_of_death: f64 },
+    Dead,
+}
+
+impl State {
+    fn update(self, map: &'static Map, time: f64, enemy: &mut Enemy) -> Self {
+        match self {
+            Self::Idle => self.idle_update(map, time, enemy),
+            Self::Dying { time_of_death } => self.dying_update(time, time_of_death, enemy),
+            Self::Dead => {
+                error!("Cannot update dead enemy");
+                self
+            }
+        }
+    }
+
+    fn idle_update(self, map: &'static Map, time: f64, enemy: &mut Enemy) -> Self {
+        if enemy.health <= 0.0 {
+            return State::Dying {
+                time_of_death: time,
+            };
+        }
+        let move_speed = enemy.get_enemy_type().get_model().get_move_speed();
+        let t = (time - enemy.get_spawn_time()) / 1000.0;
+        enemy.set_position(map.get_path().coords_at(t * move_speed));
+
+        Self::Idle
+    }
+
+    fn dying_update(self, time: f64, time_of_death: f64, enemy: &Enemy) -> Self {
+        if (enemy.get_enemy_type().get_model().death_duration + time_of_death) < time {
+            return Self::Dead;
+        }
+
+        self
+    }
+}
+
+#[derive(Serialize)]
+pub struct EnemyModel {
+    max_health: f64,
+    damage: u64,
+    move_speed: f64,
+    coin_reward: usize,
+    death_duration: f64,
+    idle_frames: GifFrames,
+    dying_frames: GifFrames,
+    idle_spritesheet: String,
+    dying_spritesheet: String,
+}
+
+impl EnemyModel {
+    pub(super) fn new(
+        max_health: f64,
+        damage: u64,
+        move_speed: f64,
+        coin_reward: usize,
+        death_duration: f64,
+        idle_frames: GifFrames,
+        dying_frames: GifFrames,
+        idle_spritesheet: String,
+        dying_spritesheet: String,
+    ) -> Self {
+        Self {
+            max_health,
+            damage,
+            move_speed,
+            coin_reward,
+            death_duration,
+            idle_frames,
+            dying_frames,
+            idle_spritesheet,
+            dying_spritesheet,
+        }
+    }
+
+    pub fn get_max_health(&self) -> f64 {
+        self.max_health
+    }
+
+    pub fn get_damage(&self) -> u64 {
+        self.damage
+    }
+
+    pub fn get_move_speed(&self) -> f64 {
+        self.move_speed
+    }
+
+    pub fn get_coin_reward(&self) -> usize {
+        self.coin_reward
+    }
 }
 
 #[derive(Serialize)]
@@ -18,6 +111,7 @@ pub struct Enemy {
     enemy_type: EnemyType,
     #[serde(skip_serializing)]
     spawn_time: f64,
+    state: Option<State>,
 }
 
 impl Enemy {
@@ -27,9 +121,10 @@ impl Enemy {
         Self {
             id,
             pos: Vector2::new(0.0, 0.0),
-            health: enemy_type.get_enemy_data().get_max_health(),
+            health: enemy_type.get_model().get_max_health(),
             enemy_type,
             spawn_time,
+            state: Some(State::Idle),
         }
     }
 
@@ -41,7 +136,27 @@ impl Enemy {
         self.spawn_time
     }
 
-    pub fn set_position(&mut self, new_pos: Vector2) {
+    pub fn is_alive(&self) -> bool {
+        match self.state.as_ref().unwrap() {
+            State::Idle => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_dead(&self) -> bool {
+        match self.state.as_ref().unwrap() {
+            State::Dead => true,
+            _ => false,
+        }
+    }
+
+    pub fn update(&mut self, time: f64, map: &'static Map) {
+        if let Some(state) = self.state.take() {
+            self.state = Some(state.update(map, time, self));
+        }
+    }
+
+    fn set_position(&mut self, new_pos: Vector2) {
         self.pos = new_pos;
     }
 

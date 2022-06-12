@@ -47,10 +47,7 @@ impl Game {
         }
     }
 
-    pub fn start(&mut self) {
-        let enemy = EnemyType::Recruit.new(self.time);
-        self.enemies.push(enemy);
-    }
+    pub fn start(&mut self) {}
 
     pub fn update(&mut self, delta_time: f64) -> usize {
         if self.is_game_over {
@@ -64,8 +61,8 @@ impl Game {
             let enemy = enemy.new(self.time);
             self.enemies.push(enemy);
         }
+        self.update_enemies();
         let gold_earned = self.remove_dead_enemies();
-        self.move_enemies();
         self.check_enemies_in_base();
         gold_earned
     }
@@ -120,30 +117,30 @@ impl Game {
     fn remove_dead_enemies(&mut self) -> usize {
         let mut gold_earned: usize = 0;
         self.enemies.retain(|enemy| {
-            return if enemy.get_health() > 0.0 {
-                true
-            } else {
-                let coins = enemy.get_enemy_type().get_enemy_data().get_coin_reward();
+            return if enemy.is_dead() {
+                let coins = enemy.get_enemy_type().get_model().get_coin_reward();
                 gold_earned += coins;
-
                 false
+            } else {
+                true
             };
         });
 
         gold_earned
     }
 
-    fn move_enemies(&mut self) {
+    fn update_enemies(&mut self) {
         for enemy in self.enemies.iter_mut() {
-            let move_speed = enemy.get_enemy_type().get_enemy_data().get_move_speed();
-            let t = (self.time - enemy.get_spawn_time()) / 1000.0;
-            enemy.set_position(self.map.get_path().coords_at(t * move_speed));
+            enemy.update(self.time, self.map);
         }
     }
 
     fn check_enemies_in_base(&mut self) {
         let rect = self.map.get_base();
         self.enemies.retain(|enemy| {
+            if !enemy.is_alive() {
+                return true;
+            }
             let is_inside = rect.is_inside(enemy.get_position());
             if is_inside {
                 self.current_lives -= 1;
