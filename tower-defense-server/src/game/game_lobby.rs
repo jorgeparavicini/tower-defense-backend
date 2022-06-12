@@ -4,19 +4,25 @@ use crate::game::server_message::{LobbyMessage, OutgoingLobbyMessage};
 use crate::game::{Client, IncomingGameMessage, OutgoingGameMessage};
 use crate::GamesDb;
 use log::{debug, error, info, warn};
+use serde::Serialize;
 use std::error::Error;
 use std::sync::Arc;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::{mpsc, Mutex};
 use tokio::task::JoinHandle;
 use tower_defense::map::levels::MAP_LEVEL_1;
-use warp::any;
 use warp::ws::WebSocket;
+
+#[derive(Serialize)]
+pub struct ChatMessage {
+    client: String,
+    message: String,
+}
 
 pub struct GameLobby {
     server: Option<Arc<Mutex<GameServer>>>,
     players: Players,
-    messages: Vec<String>,
+    messages: Vec<ChatMessage>,
     id: String,
     tx: Sender<LobbyMessage>,
     handle: JoinHandle<()>,
@@ -66,6 +72,9 @@ impl GameLobby {
             match result {
                 LobbyMessage::Start(name) => Self::start_game(&games, &id, name).await,
                 LobbyMessage::Ping(name, n) => Self::handle_ping(&games, &id, name, n).await,
+                LobbyMessage::Chat { client, message } => {
+                    Self::handle_chat_message(&games, &id, client, message).await
+                }
                 LobbyMessage::GameMessage(data, client) => {
                     Self::handle_game_message(&games, &id, data, client).await
                 }
@@ -114,6 +123,26 @@ impl GameLobby {
             if let Some(client) = lobby.players.find_client(&name) {
                 if let Err(e) = client.send_message(&OutgoingLobbyMessage::Pong(ping)) {
                     error!("Could no answer ping: {}", e);
+                }
+            }
+        }
+    }
+
+    async fn handle_chat_message(games: &GamesDb, id: &str, client_name: String, message: String) {
+        if let Some(lobby) = games.lock().await.get_mut(id) {
+            if let Some(client) = lobby.players.find_client(&client_name) {
+                if client.get_name() == client_name {
+                    lobby.messages.push(ChatMessage {
+                        client: client_name.clone(),
+                        message: message.clone(),
+                    });
+                    lobby.broadcast_message(
+                        &OutgoingLobbyMessage::NewChatMessage(ChatMessage {
+                            client: client_name,
+                            message,
+                        }),
+                        None,
+                    )
                 }
             }
         }

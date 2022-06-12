@@ -104,6 +104,10 @@ impl Client {
                     let message = match result {
                         IncomingLobbyMessage::Start => LobbyMessage::Start(client.clone()),
                         IncomingLobbyMessage::Ping(n) => LobbyMessage::Ping(client.clone(), n),
+                        IncomingLobbyMessage::Chat(message) => LobbyMessage::Chat {
+                            client: client.clone(),
+                            message,
+                        },
                     };
                     Self::send(&tx, message, &client).await;
                 } else {
